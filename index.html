@@ -49,19 +49,19 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Project Title</h1>
+          <h1 class="title is-1 publication-title">VALET: VLM-Assisted LEarning with Targeted queries</h1>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
-              <a href="https://people.epfl.ch/">John Doe</a>,
+              <a href="https://people.epfl.ch/basile.bultez">Basile Bultez</a>,
             </span>
             <span class="author-block">
-              <a href="https://people.epfl.ch/">Alice Smith</a>,
+              <a href="https://people.epfl.ch/tomas.jouven">Tomas Jouven</a>,
             </span>
             <span class="author-block">
-              <a href="https://people.epfl.ch/">Bob Johnson</a>,
+              <a href="https://people.epfl.ch/gaspard.lafont">Gaspard Lafont</a>,
             </span>
             <span class="author-block">
-              <a href="https://people.epfl.ch/">Jane Doe</a>
+              <a href="https://people.epfl.ch/harsh.talathi">Harsh Talathi</a>
             </span>
           </div>
 
@@ -71,15 +71,6 @@
           <div class="column has-text-centered">
             <div class="publication-links">
               <!-- PDF Link. -->
-              <span class="link-block">
-                <a href="https://arxiv.org"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>Document</span>
-                </a>
-              </span>
               <!-- YouTube Link. -->
               <span class="link-block">
                 <a href="https://www.youtube.com"
@@ -92,7 +83,7 @@
               </span>
               <!-- GitHub Link. -->
               <span class="link-block">
-                <a href="https://github.com/tarhanefe/cs503-project-template"
+                <a href="https://github.com/hersheytee/cs503_project"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
@@ -100,19 +91,9 @@
                   <span>Project Code</span>
                   </a>
               </span>
-              <!-- Dataset Link. -->
-                <span class="link-block">
-                  <a href="https://drive.google.com/drive/folders/13W_453e-h2TWAfAnp6Ga00TYwEzTnMtg?usp=sharing"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <i class="fab fa-google-drive"></i>
-                    </span>
-                    <span>Dataset/Drive</span>
-                  </a>
-                </span>
               <!-- GitHub Website Link. -->
               <span class="link-block">
-                <a href="https://github.com/tarhanefe/cs503-project-template"
+                <a href="https://github.com/GuizMeuh/CS503-VALET-Website"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
@@ -135,13 +116,31 @@
 <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <!-- TODO: Replace with your teaser image, gif or video file. Choose something that represents your project. -->
-      <video id="teaser" autoplay muted loop playsinline height="100%">
-        <source src="./static/videos/teaser.mp4"
-                type="video/mp4">
-      </video>
+      <div class="columns is-vcentered">
+        <!-- Left: teaser image -->
+        <div class="column is-half has-text-centered">
+          <h3 class="title is-5 mb-2">Framework Overview</h3>
+          <div style="height: 350px; display: flex; align-items: center; justify-content: center;">
+            <img src="./static/images/valet_teaser.png"
+                 alt="VALET overview diagram — RL agent bridged with a VLM expert"
+                 style="border-radius: 8px; max-height: 350px; width: 100%; object-fit: contain;">
+          </div>
+        </div>
+        <!-- Right: teaser video -->
+        <div class="column is-half has-text-centered">
+          <h3 class="title is-5 mb-2">Agent in Action</h3>
+          <div style="height: 350px; display: flex; align-items: center; justify-content: center;">
+            <video id="teaser" autoplay muted loop playsinline
+                   style="border-radius: 8px; max-height: 350px; width: 100%; object-fit: contain;">
+              <source src="./static/videos/valet_teaser.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+      </div>
       <h2 class="subtitle has-text-centered">
-        <span class="dnerf">Project Name</span> one-sentence teaser about what your project does.
+        <span class="dnerf">VALET</span> teaches a reinforcement learning agent to selectively
+        consult a VLM expert — querying only at genuine decision points to learn faster, more
+        stably, and at lower supervision cost than either approach alone.
       </h2>
     </div>
   </div>
@@ -159,15 +158,18 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            <!-- TODO: Replace this abstract with your own project summary (3-5 sentences). -->
-            [Problem] Briefly describe the problem your project tackles and why it matters.
+            We introduce <strong><span class="dnerf">VALET</span></strong> (VLM-Assisted LEarning
+            with Targeted queries), a framework that augments a PPO agent with an explicit,
+            penalized <em>query</em> action to consult an expert (BFS Oracle or VLM) on demand. The agent learns
+            endogenously when guidance is worth its cost \(c\), rather than querying blindly or
+            following a hand-crafted schedule.
           </p>
           <p>
-            [Approach] Explain your main idea, model, or system in one to two sentences.
-          </p>
-          <p>
-            [Results] Summarize key outcomes, such as quantitative improvements, qualitative
-            observations, and main conclusions.
+            Experiments on MiniGrid-DoorKey and Sokoban show faster convergence,
+            reduced variance, and self-regulated oracle usage. The querying behavior transfers
+            zero-shot to unseen tasks, and the agent naturally stops querying when the oracle is
+            not reliable enough. VALET demonstrates that RL agents can learn not just
+            <em>how</em> to act, but <em>when</em> to ask for help.
           </p>
         </div>
       </div>
@@ -246,8 +248,36 @@
           <h2 class="title is-3" id="intro">I. Introduction</h2>
           <div class="content has-text-justified">
             <p>
-              The introduction part of the report can be provided here
+              RL agents are notoriously sample-inefficient, particularly in sparse-reward settings
+              where rewards are rare and exploration is costly. They must discover task structure
+              purely through trial and error, with no prior knowledge of the world.
             </p>
+            <p>
+              VLMs, by contrast, encode rich semantic and visual knowledge acquired through
+              large-scale pretraining. Yet querying them at every timestep is prohibitively
+              expensive, and tying them rigidly to the learning loop removes any incentive for
+              the agent to become autonomous.
+            </p>
+            <p>
+              The name <strong><span class="dnerf">VALET</span></strong> reflects the core design
+              philosophy: like a valet who stands ready to assist but does not interfere unbidden,
+              the VLM is available on demand and serves the agent only when called upon. Inspired
+              by dual-process models of cognition [<a href="#ref1">1</a>], we treat the RL policy as a
+              fast, reactive system, while the VLM acts as a slower, deliberative module. VALET
+              extends the agent's action space with an explicit <em>Query VLM</em> action, which
+              returns a suggested action based on the current state. To ensure efficiency, the
+              agent is explicitly penalized by a cost \(c\) for querying, encouraging it to rely
+              on external guidance only when truly necessary.
+            </p>
+            <p>
+              We evaluate VALET by addressing the following research questions:
+            </p>
+            <ul>
+              <li>Does VALET reduce sample complexity compared to a standard PPO baseline?</li>
+              <li>Does the agent learn to invoke the VLM <em>selectively</em> and efficiently?</li>
+              <li>How does the performance–cost trade-off evolve as query penalty \(c\) varies?</li>
+              <li>Does the learned querying behavior transfer zero-shot to unseen tasks?</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -265,7 +295,33 @@
           <h2 class="title is-3" id="related-work">II. Related Works</h2>
           <div class="content has-text-justified">
             <p>
-              The related works part of the report can be provided here
+              Prior work on injecting external knowledge into RL falls into three categories.
+            </p>
+            <p>
+              <strong>Reward shaping.</strong> Kwon et al. [<a href="#ref2">2</a>], Du et al.
+              [<a href="#ref3">3</a>], Klissarov et al. [<a href="#ref4">4</a>], and Rocamonde
+              et al. [<a href="#ref5">5</a>] use LLMs or VLMs to <em>evaluate</em> the agent's
+              actions and translate that evaluation into a bonus or penalty added to the reward.
+              The VLM never decides what to do, it only scores what was done. VALET differs
+              fundamentally: the VLM <em>suggests an action</em>, and the agent actively chooses
+              whether to ask for it.
+            </p>
+            <p>
+              <strong>Foundation models as direct policies.</strong> RT-1 [<a href="#ref6">6</a>],
+              RT-2 [<a href="#ref7">7</a>], and OpenVLA [<a href="#ref8">8</a>] replace the RL
+              policy with a large vision-language-action model that produces an action at
+              <em>every</em> timestep. This is powerful but prohibitively expensive at scale, and
+              the agent has no incentive to become autonomous. VALET uses the VLM as an on-demand
+              oracle rather than a permanent policy, querying it only when the agent decides it is
+              worth the cost.
+            </p>
+            <p>
+              <strong>Most closely related.</strong> Merler et al. [<a href="#ref9">9</a>] augment
+              a PPO agent with selective VLM supervision triggered by the entropy of the policy,
+              the idea being that high-entropy states signal uncertainty and warrant guidance. VALET
+              shares this intuition but goes further: instead of a hand-crafted entropy threshold,
+              the query is an explicit action in the MDP. The agent discovers the cost–benefit
+              trade-off on its own through the RL objective.
             </p>
           </div>
         </div>
@@ -524,6 +580,44 @@ Format the equations using LaTeX and add them to the website like this:
     </div>
   </section>
 
+<!-----------------------------REFERENCES-------------------------------->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">References</h2>
+          <div class="content">
+            <p id="ref1">[1] D. Kahneman, <em>Thinking, Fast and Slow</em>. Allen Lane, 2011.
+            </p>
+            <p id="ref2">[2] M. Kwon, S. M. Xie, K. Bullard, and D. Sadigh, "Reward design with language models,"
+              <em>ICLR</em>, 2023.
+            </p>
+            <p id="ref3">[3] Y. Du et al., "Guiding pretraining in reinforcement learning with large language models,"
+              <em>ICML</em>, 2023.
+            </p>
+            <p id="ref4">[4] M. Klissarov et al., "Motif: Intrinsic motivation from artificial intelligence feedback,"
+              <em>NeurIPS Workshop on Foundation Models for Decision Making</em>, 2023.
+            </p>
+            <p id="ref5">[5] J. Rocamonde et al., "Vision-language models are zero-shot reward models for reinforcement learning,"
+              <em>ICLR</em>, 2024.
+            </p>
+            <p id="ref6">[6] A. Brohan et al., "RT-1: Robotics transformer for real-world control at scale,"
+              <em>arXiv:2212.06817</em>, 2022.
+            </p>
+            <p id="ref7">[7] A. Brohan et al., "RT-2: Vision-language-action models transfer web knowledge to robotic control,"
+              <em>arXiv:2307.15818</em>, 2023.
+            </p>
+            <p id="ref8">[8] M. J. Kim et al., "OpenVLA: An open-source vision-language-action model,"
+              <em>arXiv:2406.09246</em>, 2024.
+            </p>
+            <p id="ref9">[9] M. Merler, G. Bonetta, and B. Magnini, "Guiding reinforcement learning with selective
+              vision-language model supervision," <em>ECAI Workshop CAIPI'25</em>, 2025.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 <!------------------------------------------------------------------------->
 
 <footer class="footer">
