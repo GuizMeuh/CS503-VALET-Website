@@ -122,24 +122,23 @@
           <h3 class="title is-5 mb-2">Framework Overview</h3>
           <div style="height: 350px; display: flex; align-items: center; justify-content: center;">
             <img src="./static/images/valet_teaser.png"
-                 alt="VALET overview diagram — RL agent bridged with a VLM expert"
+                 alt="VALET overview diagram: RL agent bridged with a VLM expert"
                  style="border-radius: 8px; max-height: 350px; width: 100%; object-fit: contain;">
           </div>
         </div>
-        <!-- Right: teaser video -->
+        <!-- Right: agent in action -->
         <div class="column is-half has-text-centered">
           <h3 class="title is-5 mb-2">Agent in Action</h3>
           <div style="height: 350px; display: flex; align-items: center; justify-content: center;">
-            <video id="teaser" autoplay muted loop playsinline
-                   style="border-radius: 8px; max-height: 350px; width: 100%; object-fit: contain;">
-              <source src="./static/videos/valet_teaser.mp4" type="video/mp4">
-            </video>
+            <img src="./static/gifs/agent_moving.gif"
+                 alt="VALET agent navigating MiniGrid, selectively querying the oracle"
+                 style="border-radius: 8px; max-height: 350px; width: 100%; object-fit: contain;">
           </div>
         </div>
       </div>
       <h2 class="subtitle has-text-centered">
         <span class="dnerf">VALET</span> teaches a reinforcement learning agent to selectively
-        consult a VLM expert — querying only at genuine decision points to learn faster, more
+        consult a VLM expert, querying only at genuine decision points to learn faster, more
         stably, and at lower supervision cost than either approach alone.
       </h2>
     </div>
@@ -202,7 +201,7 @@
             <div class="tile is-parent">
               <a href="#method" class="tile is-child box">
                 <p class="subtitle">
-                  <font size="-1">Methodology</font>
+                  <font size="-1">Method</font>
                 </p>
               </a>
             </div>
@@ -210,7 +209,7 @@
             <div class="tile is-parent">
               <a href="#results" class="tile is-child box">
                 <p class="subtitle">
-                  <font size="-1">Results</font>
+                  <font size="-1">Experiments</font>
                 </p>
               </a>
             </div>
@@ -331,13 +330,12 @@
   </section>
 <!------------------------------------------------------------------------->
 
-<!-----------------------------TODO: METHODOLOGY-------------------------------->
+<!-----------------------------METHOD-------------------------------->
   <section class="section">
     <div class="container is-max-desktop">
-      <!-- Methodology. -->
       <div class="columns is-centered">
         <div class="column is-full-width">
-          <h2 class="title is-3" id="method">III. Methodology</h2>
+          <h2 class="title is-3" id="method">III. Method</h2>
           <div class="content has-text-justified">
 
             <h3 class="title is-4">A. Reinforcement Learning Agent</h3>
@@ -350,9 +348,9 @@
               agent selects \(\texttt{query}\), it receives an expert-suggested action
               \(a^* \in \mathcal{A}\) as part of its next observation, and incurs a fixed query
               cost \(c \geq 0\) subtracted from the reward signal. All other actions are executed
-              normally without any penalty. This formulation keeps the framework entirely
-              endogenous: no external scheduler or heuristic determines when to query — the agent
-              discovers the cost–benefit trade-off on its own through the RL objective.
+              normally without any penalty. This formulation is entirely endogenous: no external
+              scheduler or heuristic determines when to query. The agent discovers the cost-benefit
+              trade-off on its own through the RL objective.
             </p>
 
             <p><strong>Training Setup.</strong>
@@ -360,35 +358,10 @@
               advantage estimation (GAE), and an entropy bonus to encourage exploration. The
               policy and value networks share a convolutional encoder that processes the top-down
               RGB observation. The observation is augmented with a binary flag indicating whether
-              the last action was a query, and — when it was — the expert-suggested action encoded
-              as a one-hot vector.
+              the last action was a query; when a query was made, the expert-suggested action is
+              encoded as a one-hot vector.
             </p>
 
-            <p><strong>Oracle Upper Bound.</strong>
-              To establish an empirical ceiling on performance, we implement a Breadth-First
-              Search (BFS) oracle for each environment. Given the full environment state, the BFS
-              oracle returns the optimal next action with respect to the shortest solution path.
-              The oracle serves as the expert behind the \(\texttt{query}\) action, and agents
-              are evaluated under varying query costs \(c \in \{0.00,\, 0.01,\, 0.02,\, 0.05\}\).
-              As a <strong>lower bound baseline</strong>, we use a standard PPO agent with no
-              access to any oracle — trained on the same environment with the original action
-              space \(\mathcal{A}\), relying solely on trial and error. We track three metrics:
-              <em>episodic return</em> (net reward including query penalties),
-              <em>success rate</em> (task completion regardless of supervision cost), and
-              <em>oracle usage</em> (fraction of steps in which the agent queries the expert).
-            </p>
-
-            <!-- Figure 1: horizontal training curves -->
-            <div class="has-text-centered mt-4 mb-4">
-              <img src="./static/images/doorkey_bench.png"
-                   alt="Training curves for PPO on MiniGrid-DoorKey-8x8-v0 under varying oracle query costs."
-                   style="width: 90%; border-radius: 4px;">
-              <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 1.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 under
-                varying oracle costs \(c \in \{0.00, 0.01, 0.02, 0.05\}\).
-            </div>
-
-            <!-- Environments below -->
             <p><strong>Environments.</strong>
               We evaluate VALET on two environments of increasing complexity:
             </p>
@@ -403,91 +376,189 @@
                 planning horizons significantly longer.</li>
             </ul>
 
+            <p><strong>Oracles.</strong>
+              We consider three oracle types behind the \(\texttt{query}\) action. First, a
+              Breadth-First Search (BFS) oracle provides the optimal next action given the full
+              environment state, serving as a perfect upper bound. Second, a noisy BFS oracle
+              returns the optimal action with probability \(p\) and a random action otherwise,
+              allowing us to simulate imperfect guidance at controllable accuracy without the
+              computational cost of running a real VLM at every RL step. Third, a real VLM
+              (Qwen2-VL with a verbose prompt) is evaluated as a drop-in replacement, serving
+              as a practical but suboptimal expert.
+            </p>
+
             <h3 class="title is-4">B. Vision-Language Model</h3>
 
-            <p><strong>Evaluation Setup.</strong>
-              We benchmark eight open-weight VLMs (2–8B parameters) — including Qwen2-VL,
-              Qwen2.5-VL, InternVL2.5, InternVL3, SmolVLM, and WeThink-Qwen2.5VL — on a
-              300-sample MiniGrid evaluation set spanning Empty and DoorKey environments of
-              varying difficulty, each annotated with the ground-truth optimal action from the
-              BFS oracle. Models are served via vLLM with deterministic decoding, and prompted
-              with the top-down RGB observation alongside a brief textual state descriptor.
-              Because the action distribution is imbalanced and several models exhibit mode
-              collapse, we report <strong>macro-F1</strong> rather than accuracy as the primary
-              evaluation metric.
+            <p><strong>Model Selection.</strong>
+              We evaluate eight open-weight VLMs (2-8B parameters), including Qwen2-VL,
+              Qwen2.5-VL, InternVL2.5, InternVL3, SmolVLM, and WeThink-Qwen2.5VL. Models are
+              served via vLLM with deterministic decoding, and prompted with the top-down RGB
+              observation alongside a brief textual state descriptor. We compare three prompt
+              phrasings (<em>if_then</em>, <em>negative_rules</em>, and <em>verbose</em>) and
+              report <strong>macro-F1</strong> as the primary metric, since the action
+              distribution is imbalanced and several models exhibit mode collapse.
             </p>
-
-            <p><strong>Prompt Variants.</strong>
-              We compare three prompt phrasings — <em>if_then</em>, <em>negative_rules</em>, and
-              <em>verbose</em> — designed to study the sensitivity of model behavior to instruction
-              style. As shown in Figure 2, the choice of prompt phrasing alone can shift
-              macro-F1 by more than 20 absolute points within a single model. Based on these
-              results, we select <strong>Qwen2-VL</strong> with the <em>verbose</em> prompt as
-              our best-performing configuration.
-            </p>
-
-            <!-- Figure 2: VLM benchmark (prompt variants) -->
-            <div class="has-text-centered mt-4 mb-4">
-              <img src="./static/images/vlm_benchmark.png"
-                   alt="Macro-F1 vs. latency for VLMs under three prompt variants."
-                   style="width: 75%; border-radius: 4px;">
-              <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 2.</strong> Macro-F1 vs. mean inference latency for the evaluated
-                VLMs under three prompt variants (<em>if_then</em>, <em>negative_rules</em>,
-                <em>verbose</em>). Top-left is best. Qwen2-VL with the <em>verbose</em> prompt
-                achieves the best macro-F1 score.
-              </p>
-            </div>
 
             <p><strong>Temporal Context.</strong>
-              To investigate whether providing the VLM with action history improves its
-              predictions, we augment the prompt with a sliding window of past frames. We test
-              two history modalities: (i) past actions provided as a <em>text list</em>, and
-              (ii) past frames provided directly as <em>stacked images</em>. As shown in Figure 3,
-              neither modality yields a notable improvement in macro-F1 over the single-frame
-              baseline, suggesting that the bottleneck lies in the VLM's zero-shot spatial
-              reasoning rather than in the lack of temporal context.
+              We also investigate whether providing a sliding window of past frames improves
+              predictions, testing two history modalities: past actions as a text list, and past
+              frames as stacked images.
             </p>
 
-            <!-- Figure 3: history benchmark -->
-            <div class="has-text-centered mt-4 mb-4">
-              <img src="./static/images/bench_history.png"
-                   alt="Macro-F1 as a function of history length, for text and image history modalities."
-                   style="width: 90%; border-radius: 4px;">
-              <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Macro-F1 as a function of the number of past frames
-                provided to the VLM, for both text-based action history and image-based history.
-                Neither modality shows a notable improvement over the single-frame baseline.
-              </p>
-            </div>
+            <h3 class="title is-4">C. Zero-Shot Transfer</h3>
 
-            <p><strong>Integration into VALET.</strong>
-              Once a sufficiently reliable VLM is identified, it replaces the BFS oracle as the
-              expert behind the \(\texttt{query}\) action. The agent then trains under the same
-              cost-penalized framework, but now receives suboptimal, stochastic guidance —
-              allowing us to study how training dynamics change when the expert is imperfect.
+            <p>
+              To test whether the querying behavior learned on DoorKey generalizes to unseen
+              tasks, we deploy trained agents directly on two new MiniGrid environments without
+              any additional training or fine-tuning.
+            </p>
+
+            <p><strong>Transfer Environments.</strong>
+              Both environments are structurally different from DoorKey and require new forms of
+              reasoning:
+            </p>
+            <ul>
+              <li><strong>Fetch</strong>: multiple objects are placed on the grid and the agent
+                must pick up the correct one based on a language instruction. This task was
+                originally designed for visual and language understanding; since our oracle and
+                VLM can parse the instruction, it provides a natural test of cross-task
+                generalization.</li>
+              <li><strong>MultiRoom</strong>: the grid is divided into several rooms connected by
+                locked doors. The agent must open each door in sequence to reach the goal in the
+                final room, requiring longer-horizon planning than DoorKey.</li>
+            </ul>
+
+            <p><strong>Evaluated Agents.</strong>
+              We test two agents: (i) the VALET agent trained on DoorKey with query cost
+              \(c = 0.01\), which reached ~40% oracle usage at convergence; and (ii) a standard
+              PPO agent trained on MiniGrid-DoorKey without any oracle access, serving as the
+              baseline.
+            </p>
+
+            <p><strong>Action Decision Strategy.</strong>
+              For the VALET agent, we compare two action selection strategies at inference time.
+              The first uses <em>argmax</em>, always selecting the action with the highest policy
+              probability. The second uses <em>stochastic sampling</em>, drawing actions from the
+              policy distribution. The stochastic setup is particularly relevant: even a
+              well-trained agent occasionally assigns a small probability to the query action,
+              meaning that when the agent is stuck and repeatedly executing an incorrect move, it
+              can spontaneously call the oracle to reset its trajectory. We track four metrics:
+              success rate, episodic return, oracle usage, and <em>trajectory efficiency</em>
+              (ratio of the shortest-path length to the actual number of steps taken).
             </p>
 
           </div>
         </div>
       </div>
-      <!--/ Methodology. -->
     </div>
   </section>
 
 <!------------------------------------------------------------------------->
 
-<!-----------------------------TODO: RESULTS-------------------------------->
+<!-----------------------------EXPERIMENTS-------------------------------->
   <section class="section">
     <div class="container is-max-desktop">
-      <!-- Results. -->
       <div class="columns is-centered">
         <div class="column is-full-width">
-          <h2 class="title is-3" id="results">IV. Results</h2>
+          <h2 class="title is-3" id="results">IV. Experiments</h2>
           <div class="content has-text-justified">
+
+            <h3 class="title is-4">A. BFS Oracle: Upper Bound</h3>
+
             <p>
-              The results part of the report can be provided here
+              We first validate the VALET framework using a perfect BFS oracle to establish an
+              empirical upper bound. Agents are trained under varying query costs
+              \(c \in \{0.00,\, 0.01,\, 0.02,\, 0.05\}\) and compared against an unguided PPO
+              baseline (lower bound). We track episodic return, success rate, and oracle usage.
             </p>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/doorkey_bench.png"
+                   alt="Training curves for PPO on MiniGrid-DoorKey-8x8-v0 under varying oracle query costs."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 1.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 under
+                varying oracle costs \(c \in \{0.00, 0.01, 0.02, 0.05\}\). From left to right:
+                episodic return, success rate, and oracle usage. Shaded regions indicate variance
+                across seeds. Dashed line: unguided PPO baseline.
+              </p>
+            </div>
+
+            <p>
+              With \(c = 0\), the agent queries at nearly every step (~90%) and reaches maximum
+              return almost immediately. With \(c = 0.01\) and \(c = 0.02\), oracle usage spikes
+              early (~75%) then decays and stabilizes (~55-60%) as parts of the optimal policy
+              are internalized, while both costs still achieve 100% success rate. The most
+              striking result is at \(c = 0.05\): the agent eventually stops querying altogether,
+              yet the early oracle-guided steps bootstrap learning and allow it to reach optimal
+              success faster than the unguided baseline. Oracle access also markedly reduces
+              variance across seeds, confirming that even brief expert supervision can both
+              accelerate and stabilize PPO on sparse-reward tasks.
+            </p>
+
+            <div class="columns is-vcentered mt-2">
+              <div class="column is-half">
+                <p>
+                  Closer inspection of the best-performing setup (\(c = 0.01\)) reveals an
+                  interpretable querying strategy: the agent has effectively learned only two
+                  behaviors, going forward and calling the oracle, and triggers the oracle
+                  predominantly when no object is visible in its field of view. This suggests that
+                  the agent has internalized a meaningful exploration heuristic: navigate autonomously
+                  when the scene provides no useful signal, and delegate to the expert when guidance
+                  is needed. A key limitation of this setup, however, is that replacing the BFS
+                  oracle with a VLM of equivalent quality requires a model capable of near-optimal
+                  action prediction, which remains prohibitively expensive at inference time.
+                </p>
+              </div>
+              <div class="column is-half has-text-centered">
+                <video controls muted loop playsinline
+                       style="width: 100%; border-radius: 8px;">
+                  <source src="./static/videos/valet_teaser.mp4" type="video/mp4">
+                </video>
+              </div>
+            </div>
+
+            <h3 class="title is-4">B. VLM Benchmarking</h3>
+
+            <p>
+              Before integrating a real VLM as the oracle, we benchmark candidate models on a
+              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 2 shows the
+              macro-F1 vs. latency trade-off across models and prompt variants.
+            </p>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/vlm_benchmark.png"
+                   alt="Macro-F1 vs. latency for VLMs under three prompt variants."
+                   style="width: 75%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 2.</strong> Macro-F1 vs. mean inference latency for the evaluated
+                VLMs under three prompt variants. Top-left is best. Qwen2-VL with the
+                <em>verbose</em> prompt achieves the best macro-F1 score.
+              </p>
+            </div>
+
+            <p>
+              No model-prompt combination exceeds a macro-F1 of 0.40, and prompt phrasing alone
+              shifts performance by more than 20 absolute points within a single model. Based on
+              these results, we select <strong>Qwen2-VL</strong> with the <em>verbose</em> prompt
+              as our best configuration. We also investigate whether providing temporal context
+              (action history as text or stacked past frames) improves predictions. As shown in
+              Figure 3, neither modality yields a notable improvement, suggesting that the
+              bottleneck lies in zero-shot spatial reasoning rather than the lack of temporal
+              context.
+            </p>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/bench_history.png"
+                   alt="Macro-F1 as a function of history length."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 3.</strong> Macro-F1 as a function of the number of past frames
+                provided to the VLM, for text-based action history and image-based history.
+                Neither modality shows a notable improvement over the single-frame baseline.
+              </p>
+            </div>
+
           </div>
         </div>
       </div>
