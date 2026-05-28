@@ -761,6 +761,52 @@
               </div>
             </div>
 
+            <h3 class="title is-4">F. Extension to Sokoban</h3>
+
+            <p>
+              To verify that VALET generalizes beyond MiniGrid, we train and evaluate it on
+              Gym-Sokoban, a significantly harder environment with irreversible actions and
+              longer planning horizons. As shown below, the same framework applies without
+              modification: the agent learns to self-regulate its oracle usage as a function of
+              query cost, and the noisy oracle ablation confirms the same accuracy threshold
+              behavior as on MiniGrid. VALET works.
+            </p>
+
+            <!-- GIF left, cost results right -->
+            <div class="columns is-vcentered mt-4">
+              <div class="column is-one-third has-text-centered">
+                <img src="./static/gifs/sokoban.gif"
+                     alt="VALET agent playing Sokoban."
+                     style="width: 100%; border-radius: 8px;">
+                <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                  VALET agent navigating the Sokoban environment.
+                </p>
+              </div>
+              <div class="column is-two-thirds">
+                <img src="./static/images/sok_vary_cost.png"
+                     alt="Sokoban training curves under varying oracle costs."
+                     style="width: 100%; border-radius: 4px;">
+                <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                  <strong>Figure 9.</strong> Training curves on Sokoban under varying oracle
+                  costs. Oracle-assisted agents consistently outperform the PPO baseline,
+                  with oracle usage self-regulating as cost increases.
+                </p>
+              </div>
+            </div>
+
+            <!-- Accuracy ablation -->
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/sok_vary_acc.png"
+                   alt="Sokoban results varying oracle accuracy."
+                   style="width: 85%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 10.</strong> Sokoban results under varying oracle accuracy.
+                The agent stops querying below the accuracy threshold and benefits
+                increasingly from more reliable guidance, confirming the same behavior
+                observed on MiniGrid.
+              </p>
+            </div>
+
           </div>
         </div>
       </div>
