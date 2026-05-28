@@ -38,9 +38,94 @@
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* ── Fixed sidebar navigation ── */
+    #sidebar-nav {
+      position: fixed;
+      top: 50%;
+      left: 16px;
+      transform: translateY(-50%);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 14px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 14px;
+      box-shadow: 0 2px 18px rgba(0, 0, 0, 0.11);
+      max-width: 170px;
+    }
+    /* Section-level links (bold, larger) */
+    #sidebar-nav a.nav-section {
+      font-size: 0.82em;
+      font-family: 'Google Sans', 'Noto Sans', sans-serif;
+      font-weight: 600;
+      color: #444;
+      text-decoration: none;
+      padding: 5px 10px;
+      border-left: 3px solid transparent;
+      border-radius: 4px;
+      line-height: 1.3;
+      transition: color 0.18s, border-color 0.18s, background 0.18s;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+    #sidebar-nav a.nav-section:first-child { margin-top: 0; }
+    /* Subsection links (smaller, indented) */
+    #sidebar-nav a.nav-sub {
+      font-size: 0.73em;
+      font-family: 'Google Sans', 'Noto Sans', sans-serif;
+      font-weight: 400;
+      color: #888;
+      text-decoration: none;
+      padding: 3px 10px 3px 18px;
+      border-left: 2px solid transparent;
+      border-radius: 4px;
+      line-height: 1.3;
+      transition: color 0.18s, border-color 0.18s, background 0.18s;
+      white-space: nowrap;
+    }
+    #sidebar-nav a:hover {
+      color: #222;
+      border-left-color: #bbb;
+      background: rgba(0, 0, 0, 0.04);
+    }
+    #sidebar-nav a.active {
+      color: #3273dc;
+      border-left-color: #3273dc;
+      font-weight: 700;
+      background: rgba(50, 115, 220, 0.07);
+    }
+    /* Only show on wide screens */
+    @media screen and (max-width: 1340px) {
+      #sidebar-nav { display: none; }
+    }
+  </style>
 </head>
 <body>
 
+<!-- Fixed sidebar table of contents -->
+<nav id="sidebar-nav">
+  <a class="nav-section" href="#intro">Introduction</a>
+  <a class="nav-section" href="#related-work">Related Works</a>
+  <a class="nav-section" href="#method">Method</a>
+  <a class="nav-sub" href="#method-rl">A. RL Agent</a>
+  <a class="nav-sub" href="#method-vlm">B. VLM</a>
+  <a class="nav-sub" href="#method-transfer">C. Transfer</a>
+  <a class="nav-section" href="#results">Experiments</a>
+  <a class="nav-sub" href="#exp-bfs">A. BFS Oracle</a>
+  <a class="nav-sub" href="#exp-vlm-bench">B. VLM Bench.</a>
+  <a class="nav-sub" href="#exp-vlm-oracle">C. VLM Oracle</a>
+  <a class="nav-sub" href="#exp-noisy">D. Noisy Oracle</a>
+  <a class="nav-sub" href="#exp-transfer">E. Transfer</a>
+  <a class="nav-sub" href="#exp-sokoban">F. Sokoban</a>
+  <a class="nav-section" href="#conclusion">Conclusion</a>
+  <a class="nav-sub" href="#ccl-limitations">Limitations</a>
+  <a class="nav-sub" href="#ccl-future">Future Work</a>
+</nav>
 
 <section class="hero">
   <div class="hero-body">
@@ -309,7 +394,7 @@
           <h2 class="title is-3" id="method">III. Method</h2>
           <div class="content has-text-justified">
 
-            <h3 class="title is-4">A. Reinforcement Learning Agent</h3>
+            <h3 class="title is-4" id="method-rl">A. Reinforcement Learning Agent</h3>
 
             <p><strong>Framework Overview.</strong>
               VALET augments a standard Proximal Policy Optimization (PPO) agent with a dedicated
@@ -360,7 +445,7 @@
               as a practical but suboptimal expert.
             </p>
 
-            <h3 class="title is-4">B. Vision-Language Model</h3>
+            <h3 class="title is-4" id="method-vlm">B. Vision-Language Model</h3>
 
             <p><strong>Model Selection.</strong>
               We evaluate eight open-weight VLMs (2-8B parameters), including Qwen2-VL,
@@ -378,7 +463,7 @@
               frames as stacked images.
             </p>
 
-            <h3 class="title is-4">C. Zero-Shot Transfer</h3>
+            <h3 class="title is-4" id="method-transfer">C. Zero-Shot Transfer</h3>
 
             <p>
               To test whether the querying behavior learned on DoorKey generalizes to unseen
@@ -436,7 +521,7 @@
           <h2 class="title is-3" id="results">IV. Experiments</h2>
           <div class="content has-text-justified">
 
-            <h3 class="title is-4">A. BFS Oracle: Upper Bound</h3>
+            <h3 class="title is-4" id="exp-bfs">A. BFS Oracle: Upper Bound</h3>
 
             <p>
               We first validate the VALET framework using a perfect BFS oracle to establish an
@@ -518,7 +603,7 @@
               </div>
             </div>
 
-            <h3 class="title is-4">B. VLM Benchmarking</h3>
+            <h3 class="title is-4" id="exp-vlm-bench">B. VLM Benchmarking</h3>
 
             <p>
               Before integrating a real VLM as the oracle, we benchmark candidate models on a
@@ -559,7 +644,7 @@
               </p>
             </div>
 
-            <h3 class="title is-4">C. VLM as the Oracle</h3>
+            <h3 class="title is-4" id="exp-vlm-oracle">C. VLM as the Oracle</h3>
 
             <p>
               Having selected WeThink-Qwen2.5VL 7B with the best-performing prompt configuration,
@@ -594,7 +679,7 @@
               </p>
             </div>
 
-            <h3 class="title is-4">D. Noisy Oracle</h3>
+            <h3 class="title is-4" id="exp-noisy">D. Noisy Oracle</h3>
 
             <p>
               The VLM integration results raise a natural question: does the VALET framework
@@ -646,7 +731,7 @@
           </div>
         </div>
       </div>
-            <h3 class="title is-4">E. Zero-Shot Transfer</h3>
+            <h3 class="title is-4" id="exp-transfer">E. Zero-Shot Transfer</h3>
 
             <p>
               We deploy the VALET agent trained on DoorKey-16×16 directly on
@@ -732,7 +817,7 @@
               </div>
             </div>
 
-            <h3 class="title is-4">F. Extension to Sokoban</h3>
+            <h3 class="title is-4" id="exp-sokoban">F. Extension to Sokoban</h3>
 
             <p>
               To verify that VALET generalizes beyond MiniGrid, we train and evaluate it on
@@ -806,7 +891,7 @@
               agents can learn not just <em>how</em> to act, but <em>when</em> to ask for help.
             </p>
 
-            <h3 class="title is-4">Limitations</h3>
+            <h3 class="title is-4" id="ccl-limitations">Limitations</h3>
 
             <p><strong>Compute constraints.</strong>
               All VLM evaluations in this project were restricted to open-weight models in the
@@ -824,7 +909,7 @@
               oracles is an important direction for future work.
             </p>
 
-            <h3 class="title is-4">Future Work</h3>
+            <h3 class="title is-4" id="ccl-future">Future Work</h3>
 
             <p><strong>Are open-weight VLMs the bottleneck?</strong>
               The noisy oracle results show that performance improves sharply once oracle accuracy
@@ -925,6 +1010,47 @@
               </div>
             </div>
           </footer>
+
+
+<script>
+  /* Sidebar scroll-spy */
+  (function () {
+    const ids = [
+      'intro', 'related-work',
+      'method', 'method-rl', 'method-vlm', 'method-transfer',
+      'results', 'exp-bfs', 'exp-vlm-bench', 'exp-vlm-oracle',
+      'exp-noisy', 'exp-transfer', 'exp-sokoban',
+      'conclusion', 'ccl-limitations', 'ccl-future'
+    ];
+
+    const links = Object.fromEntries(
+      ids.map(id => [id, document.querySelector('#sidebar-nav a[href="#' + id + '"]')])
+    );
+
+    function update() {
+      let current = ids[0];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 140) current = id;
+      });
+      ids.forEach(id => {
+        if (links[id]) links[id].classList.toggle('active', id === current);
+      });
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+
+    /* Smooth scroll on sidebar link click */
+    document.querySelectorAll('#sidebar-nav a').forEach(a => {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.getElementById(this.getAttribute('href').slice(1));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  })();
+</script>
 
 </body>
 </html>
