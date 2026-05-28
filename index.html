@@ -474,7 +474,7 @@
 
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/doorkey_bench.png"
-                   alt="Training curves for PPO on MiniGrid-DoorKey-8x8-v0 under varying oracle query costs."
+                   alt="Training curves for PPO on MiniGrid-DoorKey-16x16-v0 under varying oracle query costs."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
                 <strong>Figure 1.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 under
@@ -499,7 +499,7 @@
             <div class="columns is-vcentered mt-2">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.01\)) reveals an
+                  Closer inspection of the best-performing setup (\(c = 0.012\)) reveals an
                   interpretable querying strategy: the agent has effectively learned only two
                   behaviors, going forward and calling the oracle, and triggers the oracle
                   predominantly when no object is visible in its field of view. This suggests that
@@ -557,6 +557,90 @@
                 provided to the VLM, for text-based action history and image-based history.
                 Neither modality shows a notable improvement over the single-frame baseline.
               </p>
+            </div>
+
+            <h3 class="title is-4">C. VLM as the Oracle</h3>
+
+            <p>
+              Having selected WeThink-Qwen2.5VL 7B with the best-performing prompt configuration,
+              we replace the BFS oracle with this VLM directly in the VALET training loop. At each
+              query, the agent receives the VLM's suggested action instead of the BFS-optimal one.
+              As shown in Figure 4, the results are largely inconclusive: no configuration clearly
+              outperforms the PPO baseline, and the VLM's accuracy against the BFS oracle remains
+              below 35% throughout training.
+            </p>
+
+            <p>
+              The most striking failure is at cost \(c = 0\): since querying is free, the agent
+              queries the VLM more, and because the VLM guidance is poor, it
+              actively hurts performance, making this the worst-performing configuration. At higher
+              costs, the agent queries less frequently and performs closer to the baseline, but
+              never significantly above it. These results confirm that at ~35% accuracy, the VLM
+              does not provide reliable enough guidance to benefit the agent. This motivates the
+              noisy oracle ablation in the following section, where we systematically study what
+              accuracy threshold is required for the oracle to add value.
+            </p>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/vlm_oracle.png"
+                   alt="Training curves with VLM as the oracle."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 4.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
+                WeThink-Qwen2.5VL 7B as the oracle, under varying query costs. From left to
+                right: episodic return, success rate, queries per episode, and VLM accuracy
+                vs. BFS. The cost=0 condition (free queries) performs worst due to the agent
+                over-relying on a low-accuracy VLM (~35%).
+              </p>
+            </div>
+
+            <h3 class="title is-4">D. Noisy Oracle</h3>
+
+            <p>
+              The VLM integration results raise a natural question: does the VALET framework
+              itself work, or is the lack of improvement simply due to the VLM being too weak?
+              To answer this, we decouple the framework from the VLM quality by simulating oracles
+              of controlled accuracy. A noisy oracle returns the BFS-optimal action with
+              probability \(p\) and a uniformly random action with probability \(1-p\), simulating 
+              a VLM with \(p\%\) accuracy. By sweeping \(p\) across a range of
+              values, we can identify the accuracy threshold above which oracle guidance actually
+              benefits the agent.
+            </p>
+
+            <div class="columns is-vcentered mt-2">
+              <div class="column is-half">
+                <p>
+                  As shown in Figure 5, the results confirm that the framework is sound. Above the
+                  accuracy threshold, the agent queries more frequently and achieves significantly
+                  better performance, and a sufficiently accurate oracle unlocks near-perfect success
+                  rates. Below the threshold, the agent naturally stops calling the oracle altogether,
+                  self-regulating its querying behavior through the cost signal alone.
+                </p>
+                <p>
+                  This last finding is particularly significant. It means that providing an agent
+                  with access to a low-quality VLM carries no risk: rather than being misled, the
+                  agent simply learns to ignore it. One can safely deploy VALET with any available
+                  VLM, and the agent will only benefit from it if the guidance is reliable enough.
+                  There is no downside, only a potential upside.
+                </p>
+                <p>
+                  This also opens an interesting avenue for future work: a trained VALET agent could
+                  serve as an automatic benchmark for VLM quality. By simply measuring its oracle
+                  usage rate when paired with a given VLM, one can infer whether that VLM is
+                  accurate enough to be useful, without any labeled data or manual evaluation.
+                </p>
+              </div>
+              <div class="column is-half has-text-centered">
+                <img src="./static/images/noisy_oracle.png"
+                     alt="Final success rate and oracle queries vs. oracle accuracy."
+                     style="width: 100%; border-radius: 4px;">
+                <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                  <strong>Figure 5.</strong> Final success rate (top) and oracle queries per
+                  episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
+                  current VLM accuracy (~35%). Below the threshold the agent stops querying;
+                  above it, performance increases sharply.
+                </p>
+              </div>
             </div>
 
           </div>
