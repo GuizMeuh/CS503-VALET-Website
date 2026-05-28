@@ -777,9 +777,60 @@
         <div class="column is-full-width">
           <h2 class="title is-3" id="conclusion">V. Conclusion and Limitations</h2>
           <div class="content has-text-justified">
+
             <p>
-              The conclusion and limitations part of the report can be provided here
+              VALET agents learned to query the oracle selectively and purposefully, concentrating
+              calls at genuine decision points rather than blindly delegating at every step. Across
+              all experiments, the agent self-regulates its oracle usage as a function of query
+              cost and oracle quality: it queries heavily when guidance is cheap and reliable,
+              reduces usage as the policy matures, and stops querying entirely when the oracle
+              is not worth its cost. The zero-shot transfer results further show that this
+              querying behavior is not task-specific but generalizes to structurally different
+              environments never seen during training. VALET therefore demonstrates that RL
+              agents can learn not just <em>how</em> to act, but <em>when</em> to ask for help.
             </p>
+
+            <h3 class="title is-4">Limitations</h3>
+
+            <p><strong>Compute constraints.</strong>
+              All VLM evaluations in this project were restricted to open-weight models in the
+              2-8B parameter range, due to compute budget limitations. Stronger frontier models
+              may yield significantly higher action accuracy, potentially crossing the threshold
+              above which VLM guidance genuinely benefits the agent. Whether such models would
+              make VALET fully end-to-end remains an open question.
+            </p>
+
+            <p><strong>Full observability assumption.</strong>
+              All experiments were conducted in environments where the BFS oracle observes the
+              full environment state, which is a strong assumption. In more realistic settings,
+              both the agent and the expert would only perceive a partial view of the world,
+              making reliable guidance harder to provide. Extending VALET to partially observable
+              oracles is an important direction for future work.
+            </p>
+
+            <h3 class="title is-4">Future Work</h3>
+
+            <p><strong>Are open-weight VLMs the bottleneck?</strong>
+              The noisy oracle results show that performance improves sharply once oracle accuracy
+              exceeds a threshold. Would stronger frontier models, evaluated from the agent's own
+              point of view rather than with full state access, unlock reliable enough guidance
+              to make VALET fully end-to-end with a real VLM?
+            </p>
+
+            <p><strong>VALET as a VLM benchmark.</strong>
+              As discussed in the noisy oracle section, the oracle usage rate of a trained VALET
+              agent could serve as an automatic proxy for VLM quality, without any labeled data.
+              This could provide a lightweight, deployment-time method for evaluating and
+              comparing VLMs in decision-making settings.
+            </p>
+
+            <p><strong>Transfer to continuous environments.</strong>
+              All experiments use discrete action spaces. Can VALET agents learn when to ask for
+              help in high-dimensional, continuous action spaces, such as robotic manipulation
+              or locomotion tasks? Extending the framework to continuous control would
+              significantly broaden its applicability.
+            </p>
+
           </div>
         </div>
       </div>
