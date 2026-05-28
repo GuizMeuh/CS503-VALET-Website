@@ -369,7 +369,9 @@
               <li><strong>MiniGrid-DoorKey-8×8</strong> [<a href="#ref10">10</a>]: a partially
                 observable grid-world in which the agent must pick up a key, unlock a door, and
                 reach a goal tile. The sparse reward structure and sequential sub-goals make it a
-                canonical benchmark for sparse-reward RL.</li>
+                canonical benchmark for sparse-reward RL. We also extend this environment to a
+                16×16 grid with a restricted field of view to test scalability under stronger
+                partial observability.</li>
               <li><strong>Gym-Sokoban</strong> [<a href="#ref11">11</a>]: a combinatorial puzzle
                 in which the agent must push boxes onto target locations. Unlike MiniGrid, actions
                 are irreversible and dead-ends are reachable after only a few mistakes, making
@@ -496,18 +498,45 @@
               accelerate and stabilize PPO on sparse-reward tasks.
             </p>
 
-            <div class="columns is-vcentered mt-2">
+            <p>
+              We then extend this experiment to a larger and more challenging setting:
+              MiniGrid-DoorKey-16×16 with partial observability, where the agent only perceives
+              a limited field of view rather than the full grid. Partial observability makes the
+              task significantly harder, as the agent must navigate and plan under uncertainty.
+              As shown in Figure 2, VALET not only scales to this harder setting but actually
+              benefits more from oracle guidance: the gap between the oracle-assisted agents and
+              the PPO baseline is larger than on the 8×8 grid, and the agent exhibits the same
+              self-regulated querying behavior across all cost values. This confirms that VALET
+              is particularly well-suited to environments where the agent's limited view creates
+              genuine uncertainty that the oracle can help resolve.
+            </p>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/extension_larger.png"
+                   alt="Training curves on MiniGrid-DoorKey-16x16 with partial observability."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 2.</strong> Training curves on MiniGrid-DoorKey-16×16 with partial
+                observability, under a sweep of oracle costs (blue to orange, increasing cost).
+                From left to right: episodic return, success rate, oracle usage, and oracle
+                queries per episode. VALET consistently outperforms the PPO baseline (dashed),
+                with larger gains than on the 8×8 grid.
+              </p>
+            </div>
+
+            <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.012\)) reveals an
-                  interpretable querying strategy: the agent has effectively learned only two
-                  behaviors, going forward and calling the oracle, and triggers the oracle
-                  predominantly when no object is visible in its field of view. This suggests that
-                  the agent has internalized a meaningful exploration heuristic: navigate autonomously
-                  when the scene provides no useful signal, and delegate to the expert when guidance
-                  is needed. A key limitation of this setup, however, is that replacing the BFS
-                  oracle with a VLM of equivalent quality requires a model capable of near-optimal
-                  action prediction, which remains prohibitively expensive at inference time.
+                  Closer inspection of the best-performing setup (\(c = 0.012\)) on the 16×16
+                  environment reveals an interpretable querying strategy: the agent has effectively
+                  learned only two behaviors, going forward and calling the oracle, and triggers
+                  the oracle predominantly when no object is visible in its field of view. This
+                  suggests that the agent has internalized a meaningful exploration heuristic:
+                  navigate autonomously when the scene provides no useful signal, and delegate to
+                  the expert when guidance is needed. The video shows this behavior in action.
+                  A key limitation, however, is that replacing the BFS oracle with a VLM of
+                  equivalent quality requires a model capable of near-optimal action prediction,
+                  which remains prohibitively expensive at inference time.
                 </p>
               </div>
               <div class="column is-half has-text-centered">
@@ -522,7 +551,7 @@
 
             <p>
               Before integrating a real VLM as the oracle, we benchmark candidate models on a
-              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 2 shows the
+              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 3 shows the
               macro-F1 vs. latency trade-off across models and prompt variants.
             </p>
 
@@ -531,7 +560,7 @@
                    alt="Macro-F1 vs. latency for VLMs under three prompt variants."
                    style="width: 75%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 2.</strong> Macro-F1 vs. mean inference latency for the evaluated
+                <strong>Figure 3.</strong> Macro-F1 vs. mean inference latency for the evaluated
                 VLMs under three prompt variants. Top-left is best. Qwen2-VL with the
                 <em>verbose</em> prompt achieves the best macro-F1 score.
               </p>
@@ -543,7 +572,7 @@
               these results, we select <strong>Qwen2-VL</strong> with the <em>verbose</em> prompt
               as our best configuration. We also investigate whether providing temporal context
               (action history as text or stacked past frames) improves predictions. As shown in
-              Figure 3, neither modality yields a notable improvement, suggesting that the
+              Figure 4, neither modality yields a notable improvement, suggesting that the
               bottleneck lies in zero-shot spatial reasoning rather than the lack of temporal
               context.
             </p>
@@ -553,7 +582,7 @@
                    alt="Macro-F1 as a function of history length."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Macro-F1 as a function of the number of past frames
+                <strong>Figure 4.</strong> Macro-F1 as a function of the number of past frames
                 provided to the VLM, for text-based action history and image-based history.
                 Neither modality shows a notable improvement over the single-frame baseline.
               </p>
@@ -565,7 +594,7 @@
               Having selected WeThink-Qwen2.5VL 7B with the best-performing prompt configuration,
               we replace the BFS oracle with this VLM directly in the VALET training loop. At each
               query, the agent receives the VLM's suggested action instead of the BFS-optimal one.
-              As shown in Figure 4, the results are largely inconclusive: no configuration clearly
+              As shown in Figure 5, the results are largely inconclusive: no configuration clearly
               outperforms the PPO baseline, and the VLM's accuracy against the BFS oracle remains
               below 35% throughout training.
             </p>
@@ -586,7 +615,7 @@
                    alt="Training curves with VLM as the oracle."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 4.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
+                <strong>Figure 5.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
                 WeThink-Qwen2.5VL 7B as the oracle, under varying query costs. From left to
                 right: episodic return, success rate, queries per episode, and VLM accuracy
                 vs. BFS. The cost=0 condition (free queries) performs worst due to the agent
@@ -610,7 +639,7 @@
             <div class="columns is-vcentered mt-2">
               <div class="column is-half">
                 <p>
-                  As shown in Figure 5, the results confirm that the framework is sound. Above the
+                  As shown in Figure 6, the results confirm that the framework is sound. Above the
                   accuracy threshold, the agent queries more frequently and achieves significantly
                   better performance, and a sufficiently accurate oracle unlocks near-perfect success
                   rates. Below the threshold, the agent naturally stops calling the oracle altogether,
@@ -635,11 +664,100 @@
                      alt="Final success rate and oracle queries vs. oracle accuracy."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 5.</strong> Final success rate (top) and oracle queries per
+                  <strong>Figure 6.</strong> Final success rate (top) and oracle queries per
                   episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
                   current VLM accuracy (~35%). Below the threshold the agent stops querying;
                   above it, performance increases sharply.
                 </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+            <h3 class="title is-4">E. Zero-Shot Transfer</h3>
+
+            <p>
+              We deploy the VALET agent trained on DoorKey-16×16 directly on
+              two structurally different tasks, without any retraining. We compare it against
+              a standard PPO baseline and evaluate both argmax and stochastic action selection.
+              The stochastic variant consistently outperforms argmax: by sampling from the policy
+              distribution rather than always picking the top action, the agent retains a small
+              probability of selecting the query action at every step. This acts as a natural
+              escape mechanism, when the agent gets stuck repeating the same incorrect move, it
+              can spontaneously call the oracle to reset its trajectory, rather than looping
+              indefinitely.
+            </p>
+
+            <!-- Fetch: text left, video right -->
+            <div class="columns is-vcentered mt-4">
+              <div class="column is-half">
+                <h4 class="title is-5">Fetch</h4>
+                <p>
+                  In the Fetch task, multiple objects are placed on the grid and the agent must
+                  pick up the correct one based on a language instruction. The PPO baseline
+                  achieves only 6% success rate, struggling to interpret the instruction without
+                  prior training. The VALET agent with stochastic sampling reaches 100% success,
+                  with a trajectory efficiency of 0.87, meaning it follows a near-optimal path
+                  while calling the oracle roughly 60% of the time. The argmax variant also
+                  succeeds (69%) but with less flexibility. This confirms that the query behavior
+                  learned on DoorKey transfers directly to instruction-following tasks.
+                </p>
+                <div class="has-text-centered mt-3">
+                  <img src="./static/images/simu_transfer_keys.png"
+                       alt="Zero-shot transfer results on Fetch task."
+                       style="width: 100%; border-radius: 4px;">
+                  <p class="mt-1" style="font-size: 0.78em; color: #555;">
+                    <strong>Figure 7.</strong> Zero-shot transfer on Fetch (100 episodes).
+                    Success rate, mean return, oracle queries, and trajectory efficiency
+                    for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
+                  </p>
+                </div>
+              </div>
+              <div class="column is-half has-text-centered">
+                <video controls muted loop playsinline
+                       style="width: 100%; border-radius: 8px;">
+                  <source src="./static/videos/transfer_keys.mp4" type="video/mp4">
+                </video>
+                <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                  Simulation of the VALET agent (stochastic) on the Fetch task.
+                </p>
+              </div>
+            </div>
+
+            <!-- MultiRoom: gif left, text right -->
+            <div class="columns is-vcentered mt-5">
+              <div class="column is-half has-text-centered">
+                <img src="./static/gifs/transfer_maze.gif"
+                     alt="VALET agent navigating MultiRoom zero-shot."
+                     style="width: 100%; border-radius: 8px;">
+                <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                  Simulation of the VALET agent (stochastic) on the MultiRoom task.
+                </p>
+              </div>
+              <div class="column is-half">
+                <h4 class="title is-5">MultiRoom</h4>
+                <p>
+                  In the MultiRoom task, the agent must open a sequence of doors to navigate
+                  through multiple connected rooms. This requires longer-horizon planning than
+                  DoorKey. The PPO baseline completely fails with 0% success, unable to chain
+                  the required sub-goals. Both VALET variants succeed with near-perfect rates
+                  (97% argmax, 100% stochastic) and trajectory efficiencies of 1.00 and 0.98
+                  respectively, meaning the oracle guidance yields essentially optimal paths.
+                  Oracle usage is high (~75-80%), reflecting the genuine complexity of the task,
+                  yet the agent still succeeds efficiently. This demonstrates that VALET
+                  generalizes not just to new objects but to entirely new task structures.
+                </p>
+                <div class="has-text-centered mt-3">
+                  <img src="./static/images/simu_transfer_maze.png"
+                       alt="Zero-shot transfer results on MultiRoom task."
+                       style="width: 100%; border-radius: 4px;">
+                  <p class="mt-1" style="font-size: 0.78em; color: #555;">
+                    <strong>Figure 8.</strong> Zero-shot transfer on MultiRoom (100 episodes).
+                    Success rate, mean return, oracle queries, and trajectory efficiency
+                    for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
+                  </p>
+                </div>
               </div>
             </div>
 
