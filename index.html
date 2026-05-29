@@ -4,10 +4,10 @@
 
   <meta charset="utf-8">
   <meta name="description"
-        content="Template project website. Replace this line with a one-sentence summary of your project.">
+        content="VALET teaches a reinforcement learning agent to selectively consult a VLM expert, querying only at genuine decision points to learn faster and at lower supervision cost.">
   <meta name="keywords" content="project website, template, research">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project Title</title>
+  <title>VALET: VLM-Assisted LEarning with Targeted queries</title>
 <!------------------------------------------------------------------------->
 
 
@@ -35,7 +35,7 @@
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
       }
-    };
+    }
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -104,6 +104,7 @@
       #sidebar-nav { display: none; }
     }
   </style>
+<script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/5.9.1/gradio.js"></script>
 </head>
 <body>
 
@@ -122,6 +123,7 @@
   <a class="nav-sub" href="#exp-noisy">D. Noisy Oracle</a>
   <a class="nav-sub" href="#exp-transfer">E. Transfer</a>
   <a class="nav-sub" href="#exp-sokoban">F. Sokoban</a>
+  <a class="nav-section" href="#demo">Demo</a>
   <a class="nav-section" href="#conclusion">Conclusion</a>
   <a class="nav-sub" href="#ccl-limitations">Limitations</a>
   <a class="nav-sub" href="#ccl-future">Future Work</a>
@@ -235,7 +237,9 @@
             Experiments on MiniGrid-DoorKey and Sokoban show faster convergence,
             reduced variance, and self-regulated oracle usage. The querying behavior transfers
             zero-shot to unseen tasks, and the agent naturally stops querying when the oracle is
-            not reliable enough. VALET demonstrates that RL agents can learn not just
+            not reliable enough. Furthermore, the framework enables training a single navigation
+            model across multiple tasks, allowing the agent to generalize its behavior without
+            task-specific retraining. VALET demonstrates that RL agents can learn not just
             <em>how</em> to act, but <em>when</em> to ask for help.
           </p>
         </div>
@@ -410,12 +414,7 @@
             </p>
 
             <p><strong>Training Setup.</strong>
-              We train all agents using PPO with a clipped surrogate objective, generalized
-              advantage estimation (GAE), and an entropy bonus to encourage exploration. The
-              policy and value networks share a convolutional encoder that processes the top-down
-              RGB observation. The observation is augmented with a binary flag indicating whether
-              the last action was a query; when a query was made, the expert-suggested action is
-              encoded as a one-hot vector.
+              The policy and value networks share a convolutional encoder that processes the RGB observation — a top-down full view or a partial egocentric view depending on the setting. The oracle is available as an additional action; when selected, it executes the BFS-optimal action and incurs a reward penalty of cost c.
             </p>
 
             <p><strong>Environments.</strong>
@@ -580,34 +579,69 @@
               </p>
             </div>
 
+            <h4 class="title is-5 mt-5">Interpretability of VALET</h4>
+
             <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.012\)) on the 16×16
+                  Closer inspection of the best-performing setup (\(c = 0.010\)) on the 16×16
                   environment reveals an interpretable querying strategy: the agent has effectively
                   learned only two behaviors, going forward and calling the oracle, and triggers
                   the oracle predominantly when no object is visible in its field of view. This
                   suggests that the agent has internalized a meaningful exploration heuristic:
                   navigate autonomously when the scene provides no useful signal, and delegate to
                   the expert when guidance is needed. The video shows this behavior in action.
+                  This is a case of <em>maximal delegation</em>: inspecting the action probability
+                  distribution reveals that the agent assigns nearly all probability mass to just
+                  two actions, going forward and querying the oracle. Even to turn, the agent
+                  calls the oracle rather than deciding autonomously.
+                  As the query cost increases, this behavior evolves: the agent gradually reallocates
+                  probability to other actions, learning task-specific sub-policies such as opening
+                  a door when standing in front of one, or picking up the key when it is in reach,
+                  without needing to consult the oracle. This internalization of sub-goals directly
+                  explains the progressive decrease in oracle usage as cost grows, and its complete
+                  disappearance at the highest cost values.
                   A key limitation, however, is that replacing the BFS oracle with a VLM of
                   equivalent quality requires a model capable of near-optimal action prediction,
                   which remains prohibitively expensive at inference time.
                 </p>
               </div>
               <div class="column is-half has-text-centered">
-                <video controls muted loop playsinline
-                       style="width: 100%; border-radius: 8px;">
-                  <source src="./static/videos/valet_teaser.mp4" type="video/mp4">
-                </video>
+                <img src="./static/gifs/eval_perfect.gif"
+                     alt="VALET agent on DoorKey-16x16 with perfect BFS oracle"
+                     style="width: 100%; border-radius: 8px;">
               </div>
             </div>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/cost_001.png"
+                   alt="Training curves for VALET with c=0.01 on MiniGrid-DoorKey-16x16."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 3.</strong> Training curves for \(c = 0.01\) on MiniGrid-DoorKey-16×16.
+                From left to right: episodic return, success rate, oracle usage, and oracle queries
+                per episode. The agent reaches 100% success rate and converges significantly faster
+                than the PPO baseline. Oracle usage spikes early around 70%, then stabilizes at
+                ~40% as the policy matures.
+              </p>
+            </div>
+
+            <p>
+              Figure 3 confirms the progression described above. Early in training, the agent
+              queries the oracle heavily (~70%), relying almost entirely on external guidance to
+              navigate the task. As training progresses, oracle usage stabilizes at ~40%: the agent
+              has internalized the most frequent sub-goals and only calls the oracle when genuinely
+              uncertain. This self-regulated decay in oracle dependence, combined with a 100% success
+              rate and markedly faster convergence than the PPO baseline, illustrates the core
+              benefit of VALET: expert supervision is used when it matters most, and progressively
+              replaced by learned autonomy.
+            </p>
 
             <h3 class="title is-4" id="exp-vlm-bench">B. VLM Benchmarking</h3>
 
             <p>
               Before integrating a real VLM as the oracle, we benchmark candidate models on a
-              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 3 shows the
+              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 4 shows the
               macro-F1 vs. latency trade-off across models and prompt variants.
             </p>
 
@@ -616,7 +650,7 @@
                    alt="Macro-F1 vs. latency for VLMs under three prompt variants."
                    style="width: 75%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Macro-F1 vs. mean inference latency for the evaluated
+                <strong>Figure 4.</strong> Macro-F1 vs. mean inference latency for the evaluated
                 VLMs under three prompt variants. Top-left is best. Qwen2-VL with the
                 <em>verbose</em> prompt achieves the best macro-F1 score.
               </p>
@@ -638,7 +672,7 @@
                    alt="Macro-F1 as a function of history length."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 4.</strong> Macro-F1 as a function of the number of past frames
+                <strong>Figure 5.</strong> Macro-F1 as a function of the number of past frames
                 provided to the VLM, for text-based action history and image-based history.
                 Neither modality shows a notable improvement over the single-frame baseline.
               </p>
@@ -671,7 +705,7 @@
                    alt="Training curves with VLM as the oracle."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 5.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
+                <strong>Figure 6.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
                 WeThink-Qwen2.5VL 7B as the oracle, under varying query costs. From left to
                 right: episodic return, success rate, queries per episode, and VLM accuracy
                 vs. BFS. The cost=0 condition (free queries) performs worst due to the agent
@@ -720,7 +754,7 @@
                      alt="Final success rate and oracle queries vs. oracle accuracy."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 6.</strong> Final success rate (top) and oracle queries per
+                  <strong>Figure 7.</strong> Final success rate (top) and oracle queries per
                   episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
                   current VLM accuracy (~35%). Below the threshold the agent stops querying;
                   above it, performance increases sharply.
@@ -728,9 +762,6 @@
               </div>
             </div>
 
-          </div>
-        </div>
-      </div>
             <h3 class="title is-4" id="exp-transfer">E. Zero-Shot Transfer</h3>
 
             <p>
@@ -764,17 +795,16 @@
                        alt="Zero-shot transfer results on Fetch task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 7.</strong> Zero-shot transfer on Fetch (100 episodes).
+                    <strong>Figure 8.</strong> Zero-shot transfer on Fetch (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
                 </div>
               </div>
               <div class="column is-half has-text-centered">
-                <video controls muted loop playsinline
-                       style="width: 100%; border-radius: 8px;">
-                  <source src="./static/videos/transfer_keys.mp4" type="video/mp4">
-                </video>
+                <img src="./static/gifs/transfer_fetch.gif"
+                     alt="VALET agent (stochastic) on the Fetch task"
+                     style="width: 100%; border-radius: 8px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
                   Simulation of the VALET agent (stochastic) on the Fetch task.
                 </p>
@@ -809,7 +839,7 @@
                        alt="Zero-shot transfer results on MultiRoom task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 8.</strong> Zero-shot transfer on MultiRoom (100 episodes).
+                    <strong>Figure 9.</strong> Zero-shot transfer on MultiRoom (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
@@ -853,7 +883,7 @@
                      alt="Sokoban training curves under varying oracle costs."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 9.</strong> Training curves on Sokoban under varying oracle
+                  <strong>Figure 10.</strong> Training curves on Sokoban under varying oracle
                   costs. Oracle-assisted agents consistently outperform the PPO baseline,
                   with oracle usage self-regulating as cost increases.
                 </p>
@@ -866,7 +896,7 @@
                    alt="Sokoban results varying oracle accuracy."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 10.</strong> Sokoban results under varying oracle accuracy.
+                <strong>Figure 11.</strong> Sokoban results under varying oracle accuracy.
                 The agent stops querying below the accuracy threshold and benefits
                 increasingly from more reliable guidance, confirming the same behavior
                 observed on MiniGrid.
@@ -892,8 +922,48 @@
       <!--/ Results. -->
     </div>
   </section>
-<!------------------------------------------------------------------------->
+  <!------------------------------------------------------------------------->
+  <!-- Interactive Demo. -->
+  <section class="section" id="demo">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
 
+          <h2 class="title is-3">🧭 Interactive Demo — Be the Oracle</h2>
+          <div class="content has-text-justified">
+            <p>
+              Try VALET yourself. The trained agent navigates
+              <strong>MiniGrid-DoorKey-16×16</strong> through a partial 7×7 view.
+              It can spend a small cost $c$ to <strong>query an oracle</strong> when uncertain.
+              Here, <em>you</em> are the oracle: whenever the agent decides to ask for help,
+              the simulation pauses and you choose the action it takes — exactly replacing the
+              BFS oracle from training. Try giving it good advice, or bad advice, and watch what happens.
+            </p>
+          </div>
+
+          <div style="
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            margin-top: 1.5rem;
+          ">
+            <gradio-app
+              src="https://guizmeuh-valet-betheoracle.hf.space"
+              theme_mode="light"
+            ></gradio-app>
+          </div>
+
+          <p style="margin-top: 0.75rem; font-size: 0.85em; color: #888; text-align: center;">
+            If the demo takes a moment to load, the server may be waking up — wait ~30s and refresh.
+            You can also open it directly on
+            <a href="https://huggingface.co/spaces/GuizMeuh/VALET-betheoracle" target="_blank">HuggingFace Spaces</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+</section>
+  <!------------------------------------------------------------------------->
   <section class="section">
     <div class="container is-max-desktop">
       <!-- Conclusion and Limitations. -->
@@ -1042,7 +1112,7 @@
       'intro', 'related-work',
       'method', 'method-rl', 'method-vlm', 'method-transfer',
       'results', 'exp-bfs', 'exp-vlm-bench', 'exp-vlm-oracle',
-      'exp-noisy', 'exp-transfer', 'exp-sokoban',
+      'exp-noisy', 'exp-transfer', 'exp-sokoban', 'demo',
       'conclusion', 'ccl-limitations', 'ccl-future'
     ];
 
