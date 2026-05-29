@@ -280,19 +280,20 @@ with gr.Blocks(title="VALET — be the oracle", css=css) as demo:
             status = gr.Markdown("### Press \U0001f3b2 New episode to start")
 
     with gr.Row():
-        seed_box = gr.Textbox(label="Seed (blank = random)", value="", scale=1)
-        stoch = gr.Checkbox(
-            label="Stochastic policy",
-            value=True,
-            info="Sampling makes the agent query more often (recommended for the demo).",
-            scale=1,
-        )
-        speed = gr.Slider(0.05, 1.0, value=DEFAULT_SPEED, step=0.05,
-                          label="Step delay (s)", scale=1)
-        new_btn = gr.Button("\U0001f3b2 New episode", variant="secondary", scale=1)
-        run_btn = gr.Button("\u25b6 Run", variant="primary", scale=1)
+        with gr.Column(scale=3):
+            seed_box = gr.Textbox(label="Seed (blank = random)", value="")
+            stoch = gr.Checkbox(
+                label="Stochastic policy",
+                value=True,
+                info="Sampling makes the agent query more often (recommended for the demo).",
+            )
+            speed = gr.Slider(0.05, 1.0, value=DEFAULT_SPEED, step=0.05,
+                              label="Step delay (s)")
+        with gr.Column(scale=1):
+            new_btn = gr.Button("\U0001f3b2 New episode", variant="secondary")
+            run_btn = gr.Button("\u25b6 Run", variant="primary")
+            stop_btn = gr.Button("\u23f9 Stop", variant="stop")
 
-    stop_btn = gr.Button("\u23f9 Stop", variant="stop")
 
     with gr.Group(visible=False, elem_id="oracle-panel") as oracle_panel:
         gr.Markdown("### \U0001f52e The agent is asking for guidance — choose an action:")
