@@ -279,20 +279,13 @@ with gr.Blocks(title="VALET — be the oracle", css=css) as demo:
             partial = gr.Image(label="What the agent sees (7×7 partial)", height=260)
             status = gr.Markdown("### Press \U0001f3b2 New episode to start")
 
+    stoch = gr.State(True)
+    speed = gr.State(DEFAULT_SPEED)
+    seed_box = gr.State("")
     with gr.Row():
-        with gr.Column(scale=3):
-            seed_box = gr.Textbox(label="Seed (blank = random)", value="")
-            stoch = gr.Checkbox(
-                label="Stochastic policy",
-                value=True,
-                info="Sampling makes the agent query more often (recommended for the demo).",
-            )
-            speed = gr.Slider(0.05, 1.0, value=DEFAULT_SPEED, step=0.05,
-                              label="Step delay (s)")
-        with gr.Column(scale=1):
-            new_btn = gr.Button("\U0001f3b2 New episode", variant="secondary")
-            run_btn = gr.Button("\u25b6 Run", variant="primary")
-            stop_btn = gr.Button("\u23f9 Stop", variant="stop")
+        new_btn = gr.Button("\U0001f3b2 New episode", variant="secondary")
+        run_btn = gr.Button("\u25b6 Run", variant="primary")
+        stop_btn = gr.Button("\u23f9 Stop", variant="stop")
 
 
     with gr.Group(visible=False, elem_id="oracle-panel") as oracle_panel:
