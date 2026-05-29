@@ -1286,54 +1286,6 @@
 <!------------------------------------------------------------------------->
 
 
-<!-----------------------------INDIVIDUAL CONTRIBUTIONS-------------------------------->
-  <section class="section">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-full-width">
-          <h2 class="title is-3">Individual Contributions</h2>
-          <div class="content has-text-justified">
-
-            <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
-              Tomas led the training experiments on MiniGrid-DoorKey-8×8 and 16×16, running the
-              full sweep of oracle costs and seeds that produced the main BFS oracle results
-              (Figures 1–3). He was also responsible for the interpretability analysis of the
-              trained agents, studying the action probability distributions to characterize the
-              maximal delegation regime and the progressive internalization of sub-goals as query
-              cost increases.
-            </p>
-
-            <p><strong>Hershey — Sokoban and MiniGrid 8×8.</strong>
-              Hershey extended the VALET framework to the Sokoban environment, implementing the
-              training pipeline and running the cost sweep and noisy oracle ablations on this
-              significantly harder domain with irreversible actions (Figures 10–11). He also
-              contributed to the MiniGrid-DoorKey-8×8 experiments, validating the framework on
-              the smaller grid setting.
-            </p>
-
-            <p><strong>Gaspard Lafont — VLM benchmarking and VALET integration.</strong>
-              Gaspard designed and ran the VLM benchmarking pipeline, evaluating eight open-weight
-              models across three prompt variants on the 300-sample MiniGrid evaluation set
-              (Figures 4–5). He then integrated the best-performing VLM (WeThink-Qwen2.5VL 7B)
-              directly into the VALET training loop as a drop-in replacement for the BFS oracle,
-              and analyzed the resulting training dynamics (Figure 6).
-            </p>
-
-            <p><strong>Basile Bultez — VLM benchmarking and Noisy Oracle.</strong>
-              Basile contributed to the VLM benchmarking effort alongside Gaspard, investigating
-              the effect of temporal context (action history and stacked past frames) on model
-              performance. He was also responsible for the noisy oracle ablation, designing the
-              controlled accuracy sweep that identified the accuracy threshold above which oracle
-              guidance benefits the agent (Figure 7), and drawing the connection between these
-              results and the observed VLM performance.
-            </p>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-<!------------------------------------------------------------------------->
 
 <!-----------------------------REFERENCES-------------------------------->
   <section class="section">
@@ -1404,7 +1356,39 @@
                   <div class="content">
                     <h6 class="title is-6">Individual Contributions</h6>
                     <p>
-                      Add the contributions of each team member here.
+                      <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
+              Tomas led the training experiments on MiniGrid-DoorKey-8×8 and 16×16, running the
+              full sweep of oracle costs and seeds that produced the main BFS oracle results
+              (Figures 1–3). He was also responsible for the interpretability analysis of the
+              trained agents, studying the action probability distributions to characterize the
+              maximal delegation regime and the progressive internalization of sub-goals as query
+              cost increases.
+            </p>
+
+            <p><strong>Hershey — Sokoban and MiniGrid 8×8.</strong>
+              Hershey extended the VALET framework to the Sokoban environment, implementing the
+              training pipeline and running the cost sweep and noisy oracle ablations on this
+              significantly harder domain with irreversible actions (Figures 10–11). He also
+              contributed to the MiniGrid-DoorKey-8×8 experiments, validating the framework on
+              the smaller grid setting.
+            </p>
+
+            <p><strong>Gaspard Lafont — VLM benchmarking and VALET integration.</strong>
+              Gaspard designed and ran the VLM benchmarking pipeline, evaluating eight open-weight
+              models across three prompt variants on the 300-sample MiniGrid evaluation set
+              (Figures 4–5). He then integrated the best-performing VLM (WeThink-Qwen2.5VL 7B)
+              directly into the VALET training loop as a drop-in replacement for the BFS oracle,
+              and analyzed the resulting training dynamics (Figure 6).
+            </p>
+
+            <p><strong>Basile Bultez — VLM benchmarking and Noisy Oracle.</strong>
+              Basile contributed to the VLM benchmarking effort alongside Gaspard, investigating
+              the effect of temporal context (action history and stacked past frames) on model
+              performance. He was also responsible for the noisy oracle ablation, designing the
+              controlled accuracy sweep that identified the accuracy threshold above which oracle
+              guidance benefits the agent (Figure 7), and drawing the connection between these
+              results and the observed VLM performance.
+            </p>
                     </p>
                     <p><em>
                         This website is based on the <a href="https://github.com/nerfies/nerfies.github.io"
