@@ -4,10 +4,10 @@
 
   <meta charset="utf-8">
   <meta name="description"
-        content="Template project website. Replace this line with a one-sentence summary of your project.">
+        content="VALET teaches a reinforcement learning agent to selectively consult a VLM expert, querying only at genuine decision points to learn faster and at lower supervision cost.">
   <meta name="keywords" content="project website, template, research">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project Title</title>
+  <title>VALET: VLM-Assisted LEarning with Targeted Queries</title>
 <!------------------------------------------------------------------------->
 
 
@@ -35,7 +35,7 @@
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']]
       }
-    };
+    }
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -235,7 +235,9 @@
             Experiments on MiniGrid-DoorKey and Sokoban show faster convergence,
             reduced variance, and self-regulated oracle usage. The querying behavior transfers
             zero-shot to unseen tasks, and the agent naturally stops querying when the oracle is
-            not reliable enough. VALET demonstrates that RL agents can learn not just
+            not reliable enough. Furthermore, the framework enables training a single navigation
+            model across multiple tasks, allowing the agent to generalize its behavior without
+            task-specific retraining. VALET demonstrates that RL agents can learn not just
             <em>how</em> to act, but <em>when</em> to ask for help.
           </p>
         </div>
@@ -596,10 +598,9 @@
                 </p>
               </div>
               <div class="column is-half has-text-centered">
-                <video controls muted loop playsinline
-                       style="width: 100%; border-radius: 8px;">
-                  <source src="./static/videos/valet_teaser.mp4" type="video/mp4">
-                </video>
+                <img src="./static/gifs/eval_perfect.gif"
+                     alt="VALET agent on DoorKey-16x16 with perfect BFS oracle"
+                     style="width: 100%; border-radius: 8px;">
               </div>
             </div>
 
@@ -728,9 +729,6 @@
               </div>
             </div>
 
-          </div>
-        </div>
-      </div>
             <h3 class="title is-4" id="exp-transfer">E. Zero-Shot Transfer</h3>
 
             <p>
@@ -760,7 +758,7 @@
                   learned on DoorKey transfers directly to instruction-following tasks.
                 </p>
                 <div class="has-text-centered mt-3">
-                  <img src="./static/images/simu_transfer_keys.png"
+                  <img src="./static/gifs/transfer_fetch.gif"
                        alt="Zero-shot transfer results on Fetch task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
@@ -771,10 +769,9 @@
                 </div>
               </div>
               <div class="column is-half has-text-centered">
-                <video controls muted loop playsinline
-                       style="width: 100%; border-radius: 8px;">
-                  <source src="./static/videos/transfer_keys.mp4" type="video/mp4">
-                </video>
+                <img src="./static/gifs/transfer_fetch.gif"
+                     alt="VALET agent (stochastic) on the Fetch task"
+                     style="width: 100%; border-radius: 8px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
                   Simulation of the VALET agent (stochastic) on the Fetch task.
                 </p>
