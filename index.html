@@ -7,7 +7,7 @@
         content="VALET teaches a reinforcement learning agent to selectively consult a VLM expert, querying only at genuine decision points to learn faster and at lower supervision cost.">
   <meta name="keywords" content="project website, template, research">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VALET: VLM-Assisted LEarning with Targeted Queries</title>
+  <title>VALET: VLM-Assisted LEarning with Targeted queries</title>
 <!------------------------------------------------------------------------->
 
 
@@ -104,6 +104,7 @@
       #sidebar-nav { display: none; }
     }
   </style>
+<script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/5.9.1/gradio.js"></script>
 </head>
 <body>
 
@@ -122,6 +123,7 @@
   <a class="nav-sub" href="#exp-noisy">D. Noisy Oracle</a>
   <a class="nav-sub" href="#exp-transfer">E. Transfer</a>
   <a class="nav-sub" href="#exp-sokoban">F. Sokoban</a>
+  <a class="nav-section" href="#demo">Demo</a>
   <a class="nav-section" href="#conclusion">Conclusion</a>
   <a class="nav-sub" href="#ccl-limitations">Limitations</a>
   <a class="nav-sub" href="#ccl-future">Future Work</a>
@@ -866,8 +868,42 @@
       <!--/ Results. -->
     </div>
   </section>
-<!------------------------------------------------------------------------->
-
+  <!------------------------------------------------------------------------->
+  <!-- Interactive Demo. -->
+    <section class="section" id="demo">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-full-width">
+  
+          <h2 class="title is-3">🧭 Interactive Demo — Be the Oracle</h2>
+          <div class="content has-text-justified">
+            <p>
+              Try VALET yourself. The trained agent navigates
+              <strong>MiniGrid-DoorKey-16×16</strong> through a partial 7×7 view.
+              It can spend a small cost $c$ to <strong>query an oracle</strong> when uncertain.
+              Here, <em>you</em> are the oracle: whenever the agent decides to ask for help,
+              the simulation pauses and you choose the action it takes — exactly replacing the
+              BFS oracle from training. Try giving it good advice, or bad advice, and watch what happens.
+            </p>
+          </div>
+  
+          <div style="
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            margin-top: 1.5rem;
+          ">
+            <gradio-app
+              src="https://guizmeuh-valet-betheoracle.hf.space"
+              theme_mode="light"
+            ></gradio-app>
+          </div>
+  
+        </div>
+      </div>
+    </div>
+  </section>
+  <!------------------------------------------------------------------------->
   <section class="section">
     <div class="container is-max-desktop">
       <!-- Conclusion and Limitations. -->
@@ -1016,7 +1052,7 @@
       'intro', 'related-work',
       'method', 'method-rl', 'method-vlm', 'method-transfer',
       'results', 'exp-bfs', 'exp-vlm-bench', 'exp-vlm-oracle',
-      'exp-noisy', 'exp-transfer', 'exp-sokoban',
+      'exp-noisy', 'exp-transfer', 'exp-sokoban', 'demo',
       'conclusion', 'ccl-limitations', 'ccl-future'
     ];
 
