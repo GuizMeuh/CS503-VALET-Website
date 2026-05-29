@@ -587,13 +587,23 @@
             <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.012\)) on the 16×16
+                  Closer inspection of the best-performing setup (\(c = 0.010\)) on the 16×16
                   environment reveals an interpretable querying strategy: the agent has effectively
                   learned only two behaviors, going forward and calling the oracle, and triggers
                   the oracle predominantly when no object is visible in its field of view. This
                   suggests that the agent has internalized a meaningful exploration heuristic:
                   navigate autonomously when the scene provides no useful signal, and delegate to
                   the expert when guidance is needed. The video shows this behavior in action.
+                  This is a case of <em>maximal delegation</em>: inspecting the action probability
+                  distribution reveals that the agent assigns nearly all probability mass to just
+                  two actions — going forward and querying the oracle. Even to turn, the agent
+                  calls the oracle rather than deciding autonomously.
+                  As the query cost increases, this behavior evolves: the agent gradually reallocates
+                  probability to other actions, learning task-specific sub-policies such as opening
+                  a door when standing in front of one, or picking up the key when it is in reach,
+                  without needing to consult the oracle. This internalization of sub-goals directly
+                  explains the progressive decrease in oracle usage as cost grows — and its complete
+                  disappearance at the highest cost values.
                   A key limitation, however, is that replacing the BFS oracle with a VLM of
                   equivalent quality requires a model capable of near-optimal action prediction,
                   which remains prohibitively expensive at inference time.
@@ -604,6 +614,19 @@
                      alt="VALET agent on DoorKey-16x16 with perfect BFS oracle"
                      style="width: 100%; border-radius: 8px;">
               </div>
+            </div>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/cost_001.png"
+                   alt="Action probability distribution during training for cost c=0.01."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 3.</strong> Action probability distribution throughout training for
+                \(c = 0.01\) on MiniGrid-DoorKey-16×16. The agent initially concentrates almost
+                all probability on <em>forward</em> and <em>query</em>, then progressively
+                reallocates mass to task-specific actions (door opening, key pickup) as the
+                policy matures.
+              </p>
             </div>
 
             <h3 class="title is-4" id="exp-vlm-bench">B. VLM Benchmarking</h3>
@@ -619,7 +642,7 @@
                    alt="Macro-F1 vs. latency for VLMs under three prompt variants."
                    style="width: 75%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Macro-F1 vs. mean inference latency for the evaluated
+                <strong>Figure 4.</strong> Macro-F1 vs. mean inference latency for the evaluated
                 VLMs under three prompt variants. Top-left is best. Qwen2-VL with the
                 <em>verbose</em> prompt achieves the best macro-F1 score.
               </p>
@@ -641,7 +664,7 @@
                    alt="Macro-F1 as a function of history length."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 4.</strong> Macro-F1 as a function of the number of past frames
+                <strong>Figure 5.</strong> Macro-F1 as a function of the number of past frames
                 provided to the VLM, for text-based action history and image-based history.
                 Neither modality shows a notable improvement over the single-frame baseline.
               </p>
@@ -674,7 +697,7 @@
                    alt="Training curves with VLM as the oracle."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 5.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
+                <strong>Figure 6.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
                 WeThink-Qwen2.5VL 7B as the oracle, under varying query costs. From left to
                 right: episodic return, success rate, queries per episode, and VLM accuracy
                 vs. BFS. The cost=0 condition (free queries) performs worst due to the agent
@@ -723,7 +746,7 @@
                      alt="Final success rate and oracle queries vs. oracle accuracy."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 6.</strong> Final success rate (top) and oracle queries per
+                  <strong>Figure 7.</strong> Final success rate (top) and oracle queries per
                   episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
                   current VLM accuracy (~35%). Below the threshold the agent stops querying;
                   above it, performance increases sharply.
@@ -764,7 +787,7 @@
                        alt="Zero-shot transfer results on Fetch task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 7.</strong> Zero-shot transfer on Fetch (100 episodes).
+                    <strong>Figure 8.</strong> Zero-shot transfer on Fetch (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
@@ -808,7 +831,7 @@
                        alt="Zero-shot transfer results on MultiRoom task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 8.</strong> Zero-shot transfer on MultiRoom (100 episodes).
+                    <strong>Figure 9.</strong> Zero-shot transfer on MultiRoom (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
@@ -842,7 +865,7 @@
                      alt="Sokoban training curves under varying oracle costs."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 9.</strong> Training curves on Sokoban under varying oracle
+                  <strong>Figure 10.</strong> Training curves on Sokoban under varying oracle
                   costs. Oracle-assisted agents consistently outperform the PPO baseline,
                   with oracle usage self-regulating as cost increases.
                 </p>
@@ -855,7 +878,7 @@
                    alt="Sokoban results varying oracle accuracy."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 10.</strong> Sokoban results under varying oracle accuracy.
+                <strong>Figure 11.</strong> Sokoban results under varying oracle accuracy.
                 The agent stops querying below the accuracy threshold and benefits
                 increasingly from more reliable guidance, confirming the same behavior
                 observed on MiniGrid.
