@@ -831,15 +831,25 @@
             <!-- GIF left, cost results right -->
             <div class="columns is-vcentered mt-4">
               <div class="column is-one-third has-text-centered">
-                <img src="./static/gifs/sokoban.gif"
+                <!-- Interactive condition picker -->
+                <div id="sokoban-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
+                  <button class="button is-small is-dark" onclick="setSokobanGif('baseline',this)">Baseline</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_free',this)">Free Oracle</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_cost05',this)">Cost=0.5</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget1',this)">Budget=1</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget3',this)">Budget=3</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget5',this)">Budget=5</button>
+                </div>
+                <img id="sokoban-demo"
+                     src="./static/gifs/sokoban/baseline.gif"
                      alt="VALET agent playing Sokoban."
                      style="width: 100%; border-radius: 8px;">
-                <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  VALET agent navigating the Sokoban environment.
+                <p id="sokoban-caption" class="mt-2" style="font-size: 0.82em; color: #555;">
+                  Baseline PPO agent (no oracle).
                 </p>
               </div>
               <div class="column is-two-thirds">
-                <img src="./static/images/sok_vary_cost.png"
+                <img src="./static/images/cost_curves_acc100.png"
                      alt="Sokoban training curves under varying oracle costs."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
@@ -852,7 +862,7 @@
 
             <!-- Accuracy ablation -->
             <div class="has-text-centered mt-4 mb-2">
-              <img src="./static/images/sok_vary_acc.png"
+              <img src="./static/images/accuracy_lines.png"
                    alt="Sokoban results varying oracle accuracy."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
@@ -860,6 +870,19 @@
                 The agent stops querying below the accuracy threshold and benefits
                 increasingly from more reliable guidance, confirming the same behavior
                 observed on MiniGrid.
+              </p>
+            </div>
+
+            <!-- Linear cost schedule -->
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/linear_cost_schedule.png"
+                   alt="Sokoban results with a linear query cost schedule."
+                   style="width: 85%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 11.</strong> Sokoban training curves under a linearly increasing
+                query cost schedule. The cost starts at zero and rises gradually over training,
+                allowing the agent to rely on oracle guidance early on and progressively
+                internalize the policy as the cost disincentivizes querying.
               </p>
             </div>
 
