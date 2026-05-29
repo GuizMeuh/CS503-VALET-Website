@@ -686,8 +686,7 @@
                 and all Sokoban experiments (56×56×3 RGB input, normalised to [0,1]). The first conv
                 downsamples spatially (stride 2); adaptive pooling normalises the feature map to
                 64×8×8 = 4096 before the shared FC layer. Policy and value heads use orthogonal
-                initialisation (std=0.01 and 1.0 respectively). For the budget-aware variant the
-                input carries a 4th channel encoding remaining query budget. For DoorKey-8×8
+                initialisation (std=0.01 and 1.0 respectively). For DoorKey-8×8
                 (full obs, 40×40×3) the pool is omitted and the flatten projects directly to 256.
               </p>
             </div>
@@ -1176,10 +1175,9 @@
               MiniGrid. VALET works.
             </p>
 
-            <!-- GIF left, cost results right -->
-            <div class="columns is-vcentered mt-4">
+            <!-- Interactive GIF picker (centered) -->
+            <div class="columns is-centered mt-4">
               <div class="column is-one-third has-text-centered">
-                <!-- Interactive condition picker -->
                 <div id="sokoban-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
                   <button class="button is-small is-dark" onclick="setSokobanGif('baseline',this)">Baseline</button>
                   <button class="button is-small" onclick="setSokobanGif('oracle_free',this)">Free Oracle</button>
@@ -1196,19 +1194,21 @@
                   Baseline PPO agent (no oracle).
                 </p>
               </div>
-              <div class="column is-two-thirds">
-                <img src="./static/images/cost_curves_acc100.png"
-                     alt="Sokoban training curves under varying oracle costs."
-                     style="width: 100%; border-radius: 4px;">
-                <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 10.</strong> Training curves on Gym-Sokoban (small, 7×7 board)
-                  under oracle costs \(c \in \{0, 0.1, 0.5, 0.8\}\). From left to right:
-                  episodic return, success rate, and oracle queries per episode.
-                  Oracle-assisted agents converge significantly faster than the unguided PPO
-                  baseline (dashed), and oracle usage self-regulates as cost increases — higher
-                  costs yield fewer queries without sacrificing final performance.
-                </p>
-              </div>
+            </div>
+
+            <!-- Figure 10 full-width below GIF -->
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/cost_curves_acc100.png"
+                   alt="Sokoban training curves under varying oracle costs."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 10.</strong> Training curves on Gym-Sokoban (small, 7×7 board)
+                under oracle costs \(c \in \{0, 0.1, 0.5, 0.8\}\). From left to right:
+                episodic return, success rate, and oracle queries per episode.
+                Oracle-assisted agents converge significantly faster than the unguided PPO
+                baseline (dashed), and oracle usage self-regulates as cost increases — higher
+                costs yield fewer queries without sacrificing final performance.
+              </p>
             </div>
 
             <!-- Accuracy ablation -->
@@ -1263,7 +1263,15 @@
               oracle guidance shapes the learned representations in ways that support cross-task
               transfer, not merely task-specific performance.
             </p>
-            <div class="has-text-centered mt-3 mb-2">
+            <div class="has-text-centered mt-4">
+              <img src="./static/gifs/sokoban/transfer_fixedtarget.gif"
+                   alt="VALET agent on FixedTarget-Sokoban-v2."
+                   style="width: 33%; border-radius: 8px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                VALET agent on FixedTarget-Sokoban-v2 (zero-shot).
+              </p>
+            </div>
+            <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/transfer_results.png"
                    alt="Zero-shot transfer results to FixedTarget-Sokoban."
                    style="width: 85%; border-radius: 4px;">
@@ -1275,19 +1283,6 @@
                 transfer successfully.
               </p>
             </div>
-
-            <!-- Budget oracle -->
-            <h4 class="title is-5 mt-5">Budget-Limited Oracle</h4>
-            <p>
-              As an exploratory extension, we investigate a budget-constrained variant in which
-              the agent is allowed at most \(B\) oracle queries per episode. The remaining budget
-              is communicated via a spatially-constant 4th input channel, encoded as
-              \(\lfloor(\text{remaining}/B)\times 255\rfloor\), so the CNN can condition its
-              querying decisions on how much of its allowance remains (see the architecture
-              diagram in Section III-A). These 4-channel checkpoints are not compatible with
-              the standard 3-channel weights; full quantitative results for this variant are
-              deferred to future work.
-            </p>
 
             <!-- VLM note -->
             <p class="mt-4" style="font-size:0.9em; color:#666; border-left:3px solid #e5e7eb; padding-left:1em;">
