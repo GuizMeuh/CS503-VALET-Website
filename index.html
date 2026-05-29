@@ -847,6 +847,48 @@
               </div>
             </div>
 
+            <h4 class="title is-5 mt-5">Takeaways from Zero-Shot Transfer</h4>
+
+            <p>
+              These results invite a reframing of what VALET actually learns. The PPO baseline
+              fails at transfer precisely because it memorizes a task: its policy encodes the
+              specific sub-goal structure of DoorKey and cannot generalize when that structure
+              changes. VALET, by contrast, learns a fundamentally different behavior: how to
+              navigate toward a desired object, wherever it is, by delegating the question of
+              <em>which</em> object to pursue to the oracle. The task identity is never hardcoded
+              into the policy, it is resolved at runtime through queries.
+            </p>
+
+            <p>
+              This perspective points toward an ideal regime for VALET: an agent that relies on
+              the oracle to identify and locate the target object, and autonomously navigates
+              toward it once the object enters its field of view, without further queries. When
+              multiple objects are visible simultaneously, two behaviors may emerge: the agent
+              either probes each candidate in turn until it finds the correct one, or, ideally,
+              queries the oracle precisely because it cannot resolve the ambiguity on its own.
+              The latter would yield a near-perfect, generalizable navigate-to-goal agent, capable
+              of operating across any task where a target object must be reached.
+            </p>
+
+            <p>
+              The MultiRoom results also reveal a more subtle limitation. As visible in the GIFs,
+              the agent has learned to detect objects specific to DoorKey, keys, doors of familiar
+              colors, goal tiles, but does not reliably recognize the structural elements of
+              MultiRoom as salient objects. Certain doors, likely due to their color or appearance,
+              are not treated as actionable targets: rather than navigating toward them autonomously,
+              the agent keeps querying the oracle for guidance. This directly explains the high
+              oracle usage observed in MultiRoom (~75-80%).
+              More broadly, this points to Fetch as the natural training environment for the ideal
+              VALET regime described above. Fetch is precisely the task that matches the target
+              behavior: given multiple objects simultaneously visible in the grid, navigate to the
+              correct one as specified by a language instruction. Training on Fetch would not only
+              expose the agent to a richer vocabulary of target objects, resolving the detection
+              failures observed in MultiRoom, but would directly instantiate the navigate-to-goal
+              behavior at the core of VALET's design. Due to time constraints, this training
+              scenario was not explored in this work, and we leave it as the most promising
+              direction for future investigation.
+            </p>
+
             <h3 class="title is-4" id="exp-sokoban">F. Extension to Sokoban</h3>
 
             <p>
