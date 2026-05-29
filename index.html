@@ -1026,6 +1026,23 @@
               agents can learn not just <em>how</em> to act, but <em>when</em> to ask for help.
             </p>
 
+            <p>
+              Beyond these empirical findings, the transfer experiments reveal a deeper insight
+              into what VALET actually learns. Unlike a standard PPO agent, which memorizes
+              the sub-goal structure of a specific task and fails to generalize, VALET learns a
+              fundamentally more flexible behavior: how to navigate toward a desired object by
+              delegating the question of <em>which</em> object to pursue to the oracle. The task
+              identity is never hardcoded into the policy, it is resolved at runtime through
+              queries. This makes VALET a natural foundation for a universal navigate-to-goal
+              agent: one that relies on the oracle when no target is visible, navigates
+              autonomously once a target enters its field of view, and queries again when faced
+              with ambiguity among multiple visible objects. The Fetch task, where the agent must
+              identify and reach the correct object among several simultaneously visible ones,
+              directly instantiates this ideal regime, and training on it would bring VALET
+              closest to this vision. We believe this is the most promising direction for future
+              work, and that VALET provides a principled framework to pursue it.
+            </p>
+
             <h3 class="title is-4" id="ccl-limitations">Limitations</h3>
 
             <p><strong>Compute constraints.</strong>
@@ -1058,6 +1075,14 @@
               agent could serve as an automatic proxy for VLM quality, without any labeled data.
               This could provide a lightweight, deployment-time method for evaluating and
               comparing VLMs in decision-making settings.
+            </p>
+
+            <p><strong>Training on Fetch toward a universal navigate-to-goal agent.</strong>
+              The Fetch task directly instantiates the ideal VALET behavior: identify the correct
+              target among multiple visible objects and navigate to it. Training on Fetch would
+              expose the agent to a richer object vocabulary, resolving the detection failures
+              observed in MultiRoom, and bring VALET closer to a generalizable navigate-to-goal
+              agent. Due to time constraints, this was not explored in this work.
             </p>
 
             <p><strong>Transfer to continuous environments.</strong>
