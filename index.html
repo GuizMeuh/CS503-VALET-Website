@@ -123,7 +123,7 @@
   <a class="nav-sub" href="#exp-noisy">D. Noisy Oracle</a>
   <a class="nav-sub" href="#exp-transfer">E. Transfer</a>
   <a class="nav-sub" href="#exp-sokoban">F. Sokoban</a>
-  <a class="nav-section" href="#demo">Demo</a>
+  <a class="nav-section" href="#demo">Be the Oracle</a>
   <a class="nav-section" href="#conclusion">Conclusion</a>
   <a class="nav-sub" href="#ccl-limitations">Limitations</a>
   <a class="nav-sub" href="#ccl-future">Future Work</a>
@@ -281,6 +281,14 @@
               <a href="#results" class="tile is-child box">
                 <p class="subtitle">
                   <font size="-1">Experiments</font>
+                </p>
+              </a>
+            </div>
+
+            <div class="tile is-parent">
+              <a href="#demo" class="tile is-child box">
+                <p class="subtitle">
+                  <font size="-1">Be the Oracle</font>
                 </p>
               </a>
             </div>
@@ -604,6 +612,86 @@
               The policy and value networks share a convolutional encoder that processes the RGB observation — a top-down full view or a partial egocentric view depending on the setting. The oracle is available as an additional action; when selected, it executes the BFS-optimal action and incurs a reward penalty of cost c.
             </p>
 
+            <div class="has-text-centered mt-4 mb-4">
+              <svg viewBox="0 0 865 185" xmlns="http://www.w3.org/2000/svg"
+                   style="width:100%;max-width:865px;font-family:'Noto Sans','Google Sans',sans-serif;">
+                <defs>
+                  <marker id="cnn-arr" markerWidth="6" markerHeight="4" refX="5.5" refY="2" orient="auto">
+                    <polygon points="0 0,6 2,0 4" fill="#666"/>
+                  </marker>
+                </defs>
+                <!-- Input -->
+                <rect x="5" y="71" width="78" height="58" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+                <text x="44" y="93" text-anchor="middle" font-weight="600" font-size="10.5" fill="#1e3a8a">Input</text>
+                <text x="44" y="107" text-anchor="middle" font-size="9.5" fill="#374151">56×56×3</text>
+                <text x="44" y="121" text-anchor="middle" font-size="8.5" fill="#6b7280">RGB uint8</text>
+                <line x1="83" y1="100" x2="103" y2="100" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- Conv1 -->
+                <rect x="105" y="71" width="100" height="58" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="155" y="89" text-anchor="middle" font-weight="600" font-size="10.5" fill="#78350f">Conv2d</text>
+                <text x="155" y="102" text-anchor="middle" font-size="8.5" fill="#374151">3→32, k=3, s=2</text>
+                <text x="155" y="114" text-anchor="middle" font-size="8.5" fill="#6b7280">32×28×28</text>
+                <text x="155" y="124" text-anchor="middle" font-size="8" fill="#9ca3af">ReLU</text>
+                <line x1="205" y1="100" x2="223" y2="100" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- Conv2 -->
+                <rect x="225" y="71" width="100" height="58" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="275" y="89" text-anchor="middle" font-weight="600" font-size="10.5" fill="#78350f">Conv2d</text>
+                <text x="275" y="102" text-anchor="middle" font-size="8.5" fill="#374151">32→64, k=3, s=1</text>
+                <text x="275" y="114" text-anchor="middle" font-size="8.5" fill="#6b7280">64×28×28</text>
+                <text x="275" y="124" text-anchor="middle" font-size="8" fill="#9ca3af">ReLU</text>
+                <line x1="325" y1="100" x2="343" y2="100" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- Conv3 -->
+                <rect x="345" y="71" width="100" height="58" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="395" y="89" text-anchor="middle" font-weight="600" font-size="10.5" fill="#78350f">Conv2d</text>
+                <text x="395" y="102" text-anchor="middle" font-size="8.5" fill="#374151">64→64, k=3, s=1</text>
+                <text x="395" y="114" text-anchor="middle" font-size="8.5" fill="#6b7280">64×28×28</text>
+                <text x="395" y="124" text-anchor="middle" font-size="8" fill="#9ca3af">ReLU</text>
+                <line x1="445" y1="100" x2="463" y2="100" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- AvgPool -->
+                <rect x="465" y="71" width="88" height="58" rx="6" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+                <text x="509" y="89" text-anchor="middle" font-weight="600" font-size="10.5" fill="#064e3b">AvgPool</text>
+                <text x="509" y="103" text-anchor="middle" font-size="8.5" fill="#374151">Adaptive(8×8)</text>
+                <text x="509" y="116" text-anchor="middle" font-size="8.5" fill="#6b7280">64×8×8</text>
+                <text x="509" y="126" text-anchor="middle" font-size="8" fill="#9ca3af">= 4096</text>
+                <line x1="553" y1="100" x2="571" y2="100" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- FC -->
+                <rect x="573" y="71" width="93" height="58" rx="6" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+                <text x="619" y="89" text-anchor="middle" font-weight="600" font-size="10.5" fill="#2e1065">Linear</text>
+                <text x="619" y="103" text-anchor="middle" font-size="8.5" fill="#374151">4096 → 256</text>
+                <text x="619" y="116" text-anchor="middle" font-size="8.5" fill="#9ca3af">ReLU</text>
+                <!-- Fork -->
+                <line x1="666" y1="100" x2="686" y2="100" stroke="#666" stroke-width="1.2"/>
+                <line x1="686" y1="100" x2="686" y2="73" stroke="#666" stroke-width="1.2"/>
+                <line x1="686" y1="73" x2="698" y2="73" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <line x1="686" y1="100" x2="686" y2="137" stroke="#666" stroke-width="1.2"/>
+                <line x1="686" y1="137" x2="698" y2="137" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <!-- Policy Head -->
+                <rect x="700" y="50" width="112" height="45" rx="6" fill="#fee2e2" stroke="#f87171" stroke-width="1.5"/>
+                <text x="756" y="67" text-anchor="middle" font-weight="600" font-size="10" fill="#7f1d1d">Policy Head</text>
+                <text x="756" y="80" text-anchor="middle" font-size="8.5" fill="#374151">Linear(256, n_actions)</text>
+                <text x="756" y="90" text-anchor="middle" font-size="7.5" fill="#9ca3af">std=0.01 · n∈{9,10}</text>
+                <!-- Value Head -->
+                <rect x="700" y="115" width="112" height="45" rx="6" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+                <text x="756" y="132" text-anchor="middle" font-weight="600" font-size="10" fill="#0c4a6e">Value Head</text>
+                <text x="756" y="145" text-anchor="middle" font-size="8.5" fill="#374151">Linear(256, 1)</text>
+                <text x="756" y="155" text-anchor="middle" font-size="7.5" fill="#9ca3af">std=1.0</text>
+                <!-- Outputs -->
+                <line x1="812" y1="73" x2="830" y2="73" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <text x="835" y="77" font-size="10" fill="#374151" font-style="italic">π(a|s)</text>
+                <line x1="812" y1="137" x2="830" y2="137" stroke="#666" stroke-width="1.2" marker-end="url(#cnn-arr)"/>
+                <text x="835" y="141" font-size="10" fill="#374151" font-style="italic">V(s)</text>
+              </svg>
+              <p class="mt-2" style="font-size:0.82em; color:#555;">
+                <strong>Architecture.</strong> Shared CNN encoder used for DoorKey-16×16 (partial obs)
+                and all Sokoban experiments (56×56×3 RGB input, normalised to [0,1]). The first conv
+                downsamples spatially (stride 2); adaptive pooling normalises the feature map to
+                64×8×8 = 4096 before the shared FC layer. Policy and value heads use orthogonal
+                initialisation (std=0.01 and 1.0 respectively). For the budget-aware variant the
+                input carries a 4th channel encoding remaining query budget. For DoorKey-8×8
+                (full obs, 40×40×3) the pool is omitted and the flatten projects directly to 256.
+              </p>
+            </div>
+
             <p><strong>Environments.</strong>
               We evaluate VALET on two environments of increasing complexity:
             </p>
@@ -850,7 +938,7 @@
             <p>
               We also investigate whether providing temporal context improves predictions,
               testing two history modalities: past actions as text and stacked past frames.
-              As shown in <strong>Figure 4</strong>, adding up to 5 history images yields no
+              As shown in <strong>Figure 5</strong>, adding up to 5 history images yields no
               meaningful accuracy gain for any model, and WeThink-Qwen2.5-VL 7B remains the
               top-performing model across all history lengths. This suggests that the bottleneck
               lies in zero-shot spatial reasoning rather than the lack of temporal context.
@@ -915,7 +1003,7 @@
             <div class="columns is-vcentered mt-2">
               <div class="column is-half">
                 <p>
-                  As shown in Figure 6, the results confirm that the framework is sound. Above the
+                  As shown in <strong>Figure 7</strong>, the results confirm that the framework is sound. Above the
                   accuracy threshold, the agent queries more frequently and achieves significantly
                   better performance, and a sufficiently accurate oracle unlocks near-perfect success
                   rates. Below the threshold, the agent naturally stops calling the oracle altogether,
@@ -924,7 +1012,7 @@
                 <p>
                   This last finding is particularly significant. It means that providing an agent
                   with access to a low-quality VLM carries no risk: rather than being misled, the
-                  agent simply learns to ignore it. One can safely deploy VALET with any available
+                  agent simply learns to ignore it, as long as the cost of querying is not zero. One can safely deploy VALET with any available
                   VLM, and the agent will only benefit from it if the guidance is reliable enough.
                   There is no downside, only a potential upside.
                 </p>
@@ -942,7 +1030,7 @@
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
                   <strong>Figure 7.</strong> Final success rate (top) and oracle queries per
                   episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
-                  current VLM accuracy (~35%). Below the threshold the agent stops querying;
+                  current VLM accuracy (~40%). Below the threshold the agent stops querying;
                   above it, performance increases sharply.
                 </p>
               </div>
@@ -1080,10 +1168,13 @@
             <p>
               To verify that VALET generalizes beyond MiniGrid, we train and evaluate it on
               Gym-Sokoban, a significantly harder environment with irreversible actions and
-              longer planning horizons. As shown below, the same framework applies without
+              longer planning horizons. Sokoban is a combinatorial puzzle in which the agent
+              must push boxes onto target locations; actions are irreversible, and dead-ends
+              are reachable after only a few bad moves. We build a BFS oracle that finds the
+              optimal action given full board state. The same VALET framework applies without
               modification: the agent learns to self-regulate its oracle usage as a function of
-              query cost, and the noisy oracle ablation confirms the same accuracy threshold
-              behavior as on MiniGrid. VALET works.
+              query cost, and the accuracy ablation confirms the same threshold behavior as on
+              MiniGrid. VALET works.
             </p>
 
             <!-- GIF left, cost results right -->
@@ -1093,10 +1184,10 @@
                 <div id="sokoban-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
                   <button class="button is-small is-dark" onclick="setSokobanGif('baseline',this)">Baseline</button>
                   <button class="button is-small" onclick="setSokobanGif('oracle_free',this)">Free Oracle</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_cost01',this)">Cost=0.1</button>
                   <button class="button is-small" onclick="setSokobanGif('oracle_cost05',this)">Cost=0.5</button>
-                  <button class="button is-small" onclick="setSokobanGif('budget1',this)">Budget=1</button>
-                  <button class="button is-small" onclick="setSokobanGif('budget3',this)">Budget=3</button>
-                  <button class="button is-small" onclick="setSokobanGif('budget5',this)">Budget=5</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_cost08',this)">Cost=0.8</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_linear',this)">Linear</button>
                 </div>
                 <img id="sokoban-demo"
                      src="./static/gifs/sokoban/baseline.gif"
@@ -1111,38 +1202,100 @@
                      alt="Sokoban training curves under varying oracle costs."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 10.</strong> Training curves on Sokoban under varying oracle
-                  costs. Oracle-assisted agents consistently outperform the PPO baseline,
-                  with oracle usage self-regulating as cost increases.
+                  <strong>Figure 10.</strong> Training curves on Gym-Sokoban (small, 7×7 board)
+                  under oracle costs \(c \in \{0, 0.1, 0.5, 0.8\}\). From left to right:
+                  episodic return, success rate, and oracle queries per episode.
+                  Oracle-assisted agents converge significantly faster than the unguided PPO
+                  baseline (dashed), and oracle usage self-regulates as cost increases — higher
+                  costs yield fewer queries without sacrificing final performance.
                 </p>
               </div>
             </div>
 
             <!-- Accuracy ablation -->
-            <div class="has-text-centered mt-4 mb-2">
+            <p class="mt-4">
+              As with the MiniGrid noisy oracle experiment (see <a href="#exp-noisy">Section D</a>),
+              Sokoban exhibits a clear accuracy threshold: below it, the agent ignores the oracle
+              entirely; above it, both success rate and query usage increase sharply with oracle
+              reliability. Figure 11 shows final evaluation metrics as a function of oracle
+              accuracy, with one curve per query cost. The results confirm that the VALET
+              framework is not MiniGrid-specific — the same self-regulating threshold behavior
+              emerges on a fundamentally harder planning environment.
+            </p>
+            <div class="has-text-centered mt-3 mb-2">
               <img src="./static/images/accuracy_lines.png"
                    alt="Sokoban results varying oracle accuracy."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 11.</strong> Sokoban results under varying oracle accuracy.
-                The agent stops querying below the accuracy threshold and benefits
-                increasingly from more reliable guidance, confirming the same behavior
-                observed on MiniGrid.
+                <strong>Figure 11.</strong> Final metrics on Sokoban vs. oracle accuracy \(p\),
+                one curve per query cost. From left to right: success rate, oracle usage, and
+                queries per episode. Below the accuracy threshold the agent stops querying
+                altogether; above it, performance and usage increase sharply — confirming the
+                same threshold behavior observed in the MiniGrid noisy oracle ablation
+                (<a href="#exp-noisy">Section D</a>).
               </p>
             </div>
 
             <!-- Linear cost schedule -->
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/linear_cost_schedule.png"
-                   alt="Sokoban results with a linear query cost schedule."
+                   alt="Sokoban training curves under a linearly increasing query cost schedule."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 11.</strong> Sokoban training curves under a linearly increasing
-                query cost schedule. The cost starts at zero and rises gradually over training,
-                allowing the agent to rely on oracle guidance early on and progressively
-                internalize the policy as the cost disincentivizes querying.
+                <strong>Figure 12.</strong> Training curves for the linearly increasing cost
+                schedule (\(c\) ramped from 0 to 2 over 2M steps, 3M total). The six panels
+                show: cost schedule, episodic return, reward, oracle usage, queries per episode,
+                and success-per-query ratio. The agent bootstraps on cheap oracle guidance early
+                in training, then progressively internalizes the policy as querying becomes
+                expensive, converging with strong performance and far fewer oracle calls than a
+                fixed low-cost agent.
               </p>
             </div>
+
+            <!-- Transfer results -->
+            <h4 class="title is-5 mt-5">Zero-Shot Transfer to FixedTarget-Sokoban</h4>
+            <p>
+              We evaluate zero-shot transfer by deploying the Sokoban-trained VALET agent
+              directly on FixedTarget-Sokoban-v2, a variant in which box target locations are
+              fixed rather than randomized — a task never seen during training. As shown in
+              Figure 13, transfer performance tracks oracle accuracy closely: agents trained
+              with sufficiently reliable guidance transfer successfully, while those trained
+              without (or with a low-accuracy oracle) fail to generalize. This suggests that
+              oracle guidance shapes the learned representations in ways that support cross-task
+              transfer, not merely task-specific performance.
+            </p>
+            <div class="has-text-centered mt-3 mb-2">
+              <img src="./static/images/transfer_results.png"
+                   alt="Zero-shot transfer results to FixedTarget-Sokoban."
+                   style="width: 85%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 13.</strong> Zero-shot transfer to FixedTarget-Sokoban-v2 (never
+                seen during training). Success rate, oracle usage, and queries per episode vs.
+                oracle accuracy \(p\), one curve per query cost. Transfer performance tracks
+                oracle accuracy — only policies trained with sufficient guidance quality
+                transfer successfully.
+              </p>
+            </div>
+
+            <!-- Budget oracle -->
+            <h4 class="title is-5 mt-5">Budget-Limited Oracle</h4>
+            <p>
+              As an exploratory extension, we investigate a budget-constrained variant in which
+              the agent is allowed at most \(B\) oracle queries per episode. The remaining budget
+              is communicated via a spatially-constant 4th input channel, encoded as
+              \(\lfloor(\text{remaining}/B)\times 255\rfloor\), so the CNN can condition its
+              querying decisions on how much of its allowance remains (see the architecture
+              diagram in Section III-A). These 4-channel checkpoints are not compatible with
+              the standard 3-channel weights; full quantitative results for this variant are
+              deferred to future work.
+            </p>
+
+            <!-- VLM note -->
+            <p class="mt-4" style="font-size:0.9em; color:#666; border-left:3px solid #e5e7eb; padding-left:1em;">
+              <em>We did not evaluate a real VLM on Sokoban due to compute constraints; the
+              noisy oracle ablation above suggests a VLM would need &gt;75% action accuracy
+              to reliably benefit the agent on this environment.</em>
+            </p>
 
           </div>
         </div>
@@ -1287,54 +1440,6 @@
 <!------------------------------------------------------------------------->
 
 
-<!-----------------------------INDIVIDUAL CONTRIBUTIONS-------------------------------->
-  <section class="section">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-full-width">
-          <h2 class="title is-3">Individual Contributions</h2>
-          <div class="content has-text-justified">
-
-            <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
-              Tomas led the training experiments on MiniGrid-DoorKey-8×8 and 16×16, running the
-              full sweep of oracle costs and seeds that produced the main BFS oracle results
-              (Figures 1–3). He was also responsible for the interpretability analysis of the
-              trained agents, studying the action probability distributions to characterize the
-              maximal delegation regime and the progressive internalization of sub-goals as query
-              cost increases.
-            </p>
-
-            <p><strong>Hershey — Sokoban and MiniGrid 8×8.</strong>
-              Hershey extended the VALET framework to the Sokoban environment, implementing the
-              training pipeline and running the cost sweep and noisy oracle ablations on this
-              significantly harder domain with irreversible actions (Figures 10–11). He also
-              contributed to the MiniGrid-DoorKey-8×8 experiments, validating the framework on
-              the smaller grid setting.
-            </p>
-
-            <p><strong>Gaspard Lafont — VLM benchmarking and VALET integration.</strong>
-              Gaspard designed and ran the VLM benchmarking pipeline, evaluating eight open-weight
-              models across three prompt variants on the 300-sample MiniGrid evaluation set
-              (Figures 4–5). He then integrated the best-performing VLM (WeThink-Qwen2.5VL 7B)
-              directly into the VALET training loop as a drop-in replacement for the BFS oracle,
-              and analyzed the resulting training dynamics (Figure 6).
-            </p>
-
-            <p><strong>Basile Bultez — VLM benchmarking and Noisy Oracle.</strong>
-              Basile contributed to the VLM benchmarking effort alongside Gaspard, investigating
-              the effect of temporal context (action history and stacked past frames) on model
-              performance. He was also responsible for the noisy oracle ablation, designing the
-              controlled accuracy sweep that identified the accuracy threshold above which oracle
-              guidance benefits the agent (Figure 7), and drawing the connection between these
-              results and the observed VLM performance.
-            </p>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-<!------------------------------------------------------------------------->
 
 <!-----------------------------REFERENCES-------------------------------->
   <section class="section">
@@ -1405,7 +1510,39 @@
                   <div class="content">
                     <h6 class="title is-6">Individual Contributions</h6>
                     <p>
-                      Add the contributions of each team member here.
+                      <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
+              Tomas led the training experiments on MiniGrid-DoorKey-8×8 and 16×16, running the
+              full sweep of oracle costs and seeds that produced the main BFS oracle results
+              (Figures 1–3). He was also responsible for the interpretability analysis of the
+              trained agents, studying the action probability distributions to characterize the
+              maximal delegation regime and the progressive internalization of sub-goals as query
+              cost increases.
+            </p>
+
+            <p><strong>Hershey — Sokoban and MiniGrid 8×8.</strong>
+              Hershey extended the VALET framework to the Sokoban environment, implementing the
+              training pipeline and running the cost sweep and noisy oracle ablations on this
+              significantly harder domain with irreversible actions (Figures 10–11). He also
+              contributed to the MiniGrid-DoorKey-8×8 experiments, validating the framework on
+              the smaller grid setting.
+            </p>
+
+            <p><strong>Gaspard Lafont — VLM benchmarking and VALET integration.</strong>
+              Gaspard designed and ran the VLM benchmarking pipeline, evaluating eight open-weight
+              models across three prompt variants on the 300-sample MiniGrid evaluation set
+              (Figures 4–5). He then integrated the best-performing VLM (WeThink-Qwen2.5VL 7B)
+              directly into the VALET training loop as a drop-in replacement for the BFS oracle,
+              and analyzed the resulting training dynamics (Figure 6).
+            </p>
+
+            <p><strong>Basile Bultez — VLM benchmarking and Noisy Oracle.</strong>
+              Basile contributed to the VLM benchmarking effort alongside Gaspard, investigating
+              the effect of temporal context (action history and stacked past frames) on model
+              performance. He was also responsible for the noisy oracle ablation, designing the
+              controlled accuracy sweep that identified the accuracy threshold above which oracle
+              guidance benefits the agent (Figure 7), and drawing the connection between these
+              results and the observed VLM performance.
+            </p>
                     </p>
                     <p><em>
                         This website is based on the <a href="https://github.com/nerfies/nerfies.github.io"

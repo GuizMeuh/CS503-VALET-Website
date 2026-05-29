@@ -2,12 +2,12 @@ window.HELP_IMPROVE_VIDEOJS = false;
 
 // ── Sokoban interactive GIF picker ────────────────────────────────────────────
 var SOKOBAN_CAPTIONS = {
-  baseline:     'Baseline PPO agent (no oracle).',
-  oracle_free:  'Free perfect oracle (cost=0, acc=100%): agent queries nearly every step.',
-  oracle_cost05:'Oracle at cost=0.5: agent self-regulates query frequency.',
-  budget1:      'Budget oracle — 1 query per episode: agent must choose the critical moment.',
-  budget3:      'Budget oracle — 3 queries per episode: strategic querying.',
-  budget5:      'Budget oracle — 5 queries per episode.',
+  baseline:      'Baseline PPO agent — no oracle access.',
+  oracle_free:   'Free oracle (cost=0, acc=100%): agent queries nearly every step and solves consistently.',
+  oracle_cost01: 'Cost=0.1: agent queries heavily but begins to self-regulate.',
+  oracle_cost05: 'Cost=0.5: agent queries selectively — only at critical decision points.',
+  oracle_cost08: 'Cost=0.8: agent queries rarely, relying mostly on its own learned policy.',
+  oracle_linear: 'Linear cost schedule (0→2 over 2M steps): agent bootstraps on cheap guidance early, then internalizes the policy as querying becomes expensive.',
 };
 
 function setSokobanGif(key, btn) {
