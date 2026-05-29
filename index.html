@@ -854,23 +854,24 @@
             <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.010\)) on the 16×16
-                  environment reveals an interpretable querying strategy: the agent has effectively
-                  learned only two behaviors, going forward and calling the oracle, and triggers
-                  the oracle predominantly when no object is visible in its field of view. This
-                  suggests that the agent has internalized a meaningful exploration heuristic:
-                  navigate autonomously when the scene provides no useful signal, and delegate to
-                  the expert when guidance is needed. The video shows this behavior in action.
-                  This is a case of <em>maximal delegation</em>: inspecting the action probability
-                  distribution reveals that the agent assigns nearly all probability mass to just
-                  two actions, going forward and querying the oracle. Even to turn, the agent
+                  Closer inspection of the converged agent (\(c = 0.010\)) on the 16×16
+                  environment reveals an interpretable querying strategy: the agent predominantly
+                  triggers the oracle when no object is visible in its field of view, and navigates
+                  simply by going forward when a target is in sight. The video shows this behavior in action.
+                  Inspecting the action probability distribution of the final policy, the agent
+                  operates in a regime close to <em>maximal delegation</em>: most probability mass
+                  is concentrated on going forward and querying the oracle. Even to turn, the agent
                   calls the oracle rather than deciding autonomously.
-                  As the query cost increases, this behavior evolves: the agent gradually reallocates
-                  probability to other actions, learning task-specific sub-policies such as opening
-                  a door when standing in front of one, or picking up the key when it is in reach,
-                  without needing to consult the oracle. This internalization of sub-goals directly
-                  explains the progressive decrease in oracle usage as cost grows, and its complete
-                  disappearance at the highest cost values.
+                  What is particularly striking, however, is that the agent has internalized
+                  at least one task-specific interaction: it opens a door when standing in front
+                  of one, without consulting the oracle. The converged policy is therefore not
+                  one of pure delegation but of a <em>mixed regime</em>, where the oracle handles
+                  navigation and exploration, and a learned sub-policy handles door opening.
+                  Interestingly, key pickup is not internalized at this cost level, but emerges
+                  at higher query costs, when the agent is more incentivized to act autonomously.
+                  This staged internalization of sub-goals, ordered by how frequently and reliably
+                  they can be executed without guidance, offers a fine-grained window into how
+                  VALET progressively builds autonomy.
                   A key limitation, however, is that replacing the BFS oracle with a VLM of
                   equivalent quality requires a model capable of near-optimal action prediction,
                   which remains prohibitively expensive at inference time.
