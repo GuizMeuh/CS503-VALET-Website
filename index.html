@@ -601,12 +601,7 @@
             </p>
 
             <p><strong>Training Setup.</strong>
-              We train all agents using PPO with a clipped surrogate objective, generalized
-              advantage estimation (GAE), and an entropy bonus to encourage exploration. The
-              policy and value networks share a convolutional encoder that processes the top-down
-              RGB observation. The observation is augmented with a binary flag indicating whether
-              the last action was a query; when a query was made, the expert-suggested action is
-              encoded as a one-hot vector.
+              The policy and value networks share a convolutional encoder that processes the RGB observation — a top-down full view or a partial egocentric view depending on the setting. The oracle is available as an additional action; when selected, it executes the BFS-optimal action and incurs a reward penalty of cost c.
             </p>
 
             <p><strong>Environments.</strong>
@@ -767,16 +762,28 @@
               </p>
             </div>
 
+            <h4 class="title is-5 mt-5">Interpretability of VALET</h4>
+
             <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
-                  Closer inspection of the best-performing setup (\(c = 0.012\)) on the 16×16
+                  Closer inspection of the best-performing setup (\(c = 0.010\)) on the 16×16
                   environment reveals an interpretable querying strategy: the agent has effectively
                   learned only two behaviors, going forward and calling the oracle, and triggers
                   the oracle predominantly when no object is visible in its field of view. This
                   suggests that the agent has internalized a meaningful exploration heuristic:
                   navigate autonomously when the scene provides no useful signal, and delegate to
                   the expert when guidance is needed. The video shows this behavior in action.
+                  This is a case of <em>maximal delegation</em>: inspecting the action probability
+                  distribution reveals that the agent assigns nearly all probability mass to just
+                  two actions, going forward and querying the oracle. Even to turn, the agent
+                  calls the oracle rather than deciding autonomously.
+                  As the query cost increases, this behavior evolves: the agent gradually reallocates
+                  probability to other actions, learning task-specific sub-policies such as opening
+                  a door when standing in front of one, or picking up the key when it is in reach,
+                  without needing to consult the oracle. This internalization of sub-goals directly
+                  explains the progressive decrease in oracle usage as cost grows, and its complete
+                  disappearance at the highest cost values.
                   A key limitation, however, is that replacing the BFS oracle with a VLM of
                   equivalent quality requires a model capable of near-optimal action prediction,
                   which remains prohibitively expensive at inference time.
@@ -788,6 +795,30 @@
                      style="width: 100%; border-radius: 8px;">
               </div>
             </div>
+
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/cost_001.png"
+                   alt="Training curves for VALET with c=0.01 on MiniGrid-DoorKey-16x16."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 3.</strong> Training curves for \(c = 0.01\) on MiniGrid-DoorKey-16×16.
+                From left to right: episodic return, success rate, oracle usage, and oracle queries
+                per episode. The agent reaches 100% success rate and converges significantly faster
+                than the PPO baseline. Oracle usage spikes early around 70%, then stabilizes at
+                ~40% as the policy matures.
+              </p>
+            </div>
+
+            <p>
+              Figure 3 confirms the progression described above. Early in training, the agent
+              queries the oracle heavily (~70%), relying almost entirely on external guidance to
+              navigate the task. As training progresses, oracle usage stabilizes at ~40%: the agent
+              has internalized the most frequent sub-goals and only calls the oracle when genuinely
+              uncertain. This self-regulated decay in oracle dependence, combined with a 100% success
+              rate and markedly faster convergence than the PPO baseline, illustrates the core
+              benefit of VALET: expert supervision is used when it matters most, and progressively
+              replaced by learned autonomy.
+            </p>
 
             <h3 class="title is-4" id="exp-vlm-bench">B. VLM Benchmarking</h3>
 
@@ -828,7 +859,7 @@
                    alt="Macro-F1 as a function of history length."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 4.</strong> Macro-F1 as a function of the number of past frames
+                <strong>Figure 5.</strong> Macro-F1 as a function of the number of past frames
                 provided to the VLM, for text-based action history and image-based history.
                 Neither modality shows a notable improvement over the single-frame baseline.
               </p>
@@ -861,7 +892,7 @@
                    alt="Training curves with VLM as the oracle."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 5.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
+                <strong>Figure 6.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 with
                 WeThink-Qwen2.5VL 7B as the oracle, under varying query costs. From left to
                 right: episodic return, success rate, queries per episode, and VLM accuracy
                 vs. BFS. The cost=0 condition (free queries) performs worst due to the agent
@@ -910,7 +941,7 @@
                      alt="Final success rate and oracle queries vs. oracle accuracy."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 6.</strong> Final success rate (top) and oracle queries per
+                  <strong>Figure 7.</strong> Final success rate (top) and oracle queries per
                   episode (bottom) vs. oracle accuracy \(p\). The red dotted line marks the
                   current VLM accuracy (~35%). Below the threshold the agent stops querying;
                   above it, performance increases sharply.
@@ -951,7 +982,7 @@
                        alt="Zero-shot transfer results on Fetch task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 7.</strong> Zero-shot transfer on Fetch (100 episodes).
+                    <strong>Figure 8.</strong> Zero-shot transfer on Fetch (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
@@ -995,13 +1026,55 @@
                        alt="Zero-shot transfer results on MultiRoom task."
                        style="width: 100%; border-radius: 4px;">
                   <p class="mt-1" style="font-size: 0.78em; color: #555;">
-                    <strong>Figure 8.</strong> Zero-shot transfer on MultiRoom (100 episodes).
+                    <strong>Figure 9.</strong> Zero-shot transfer on MultiRoom (100 episodes).
                     Success rate, mean return, oracle queries, and trajectory efficiency
                     for Oracle 0.01 argmax, Oracle 0.01 stochastic, and PPO baseline.
                   </p>
                 </div>
               </div>
             </div>
+
+            <h4 class="title is-5 mt-5">Takeaways from Zero-Shot Transfer</h4>
+
+            <p>
+              These results invite a reframing of what VALET actually learns. The PPO baseline
+              fails at transfer precisely because it memorizes a task: its policy encodes the
+              specific sub-goal structure of DoorKey and cannot generalize when that structure
+              changes. VALET, by contrast, learns a fundamentally different behavior: how to
+              navigate toward a desired object, wherever it is, by delegating the question of
+              <em>which</em> object to pursue to the oracle. The task identity is never hardcoded
+              into the policy, it is resolved at runtime through queries.
+            </p>
+
+            <p>
+              This perspective points toward an ideal regime for VALET: an agent that relies on
+              the oracle to identify and locate the target object, and autonomously navigates
+              toward it once the object enters its field of view, without further queries. When
+              multiple objects are visible simultaneously, two behaviors may emerge: the agent
+              either probes each candidate in turn until it finds the correct one, or, ideally,
+              queries the oracle precisely because it cannot resolve the ambiguity on its own.
+              The latter would yield a near-perfect, generalizable navigate-to-goal agent, capable
+              of operating across any task where a target object must be reached.
+            </p>
+
+            <p>
+              The MultiRoom results also reveal a more subtle limitation. As visible in the GIFs,
+              the agent has learned to detect objects specific to DoorKey, keys, doors of familiar
+              colors, goal tiles, but does not reliably recognize the structural elements of
+              MultiRoom as salient objects. Certain doors, likely due to their color or appearance,
+              are not treated as actionable targets: rather than navigating toward them autonomously,
+              the agent keeps querying the oracle for guidance. This directly explains the high
+              oracle usage observed in MultiRoom (~75-80%).
+              More broadly, this points to Fetch as the natural training environment for the ideal
+              VALET regime described above. Fetch is precisely the task that matches the target
+              behavior: given multiple objects simultaneously visible in the grid, navigate to the
+              correct one as specified by a language instruction. Training on Fetch would not only
+              expose the agent to a richer vocabulary of target objects, resolving the detection
+              failures observed in MultiRoom, but would directly instantiate the navigate-to-goal
+              behavior at the core of VALET's design. Due to time constraints, this training
+              scenario was not explored in this work, and we leave it as the most promising
+              direction for future investigation.
+            </p>
 
             <h3 class="title is-4" id="exp-sokoban">F. Extension to Sokoban</h3>
 
@@ -1017,19 +1090,29 @@
             <!-- GIF left, cost results right -->
             <div class="columns is-vcentered mt-4">
               <div class="column is-one-third has-text-centered">
-                <img src="./static/gifs/sokoban.gif"
+                <!-- Interactive condition picker -->
+                <div id="sokoban-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
+                  <button class="button is-small is-dark" onclick="setSokobanGif('baseline',this)">Baseline</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_free',this)">Free Oracle</button>
+                  <button class="button is-small" onclick="setSokobanGif('oracle_cost05',this)">Cost=0.5</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget1',this)">Budget=1</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget3',this)">Budget=3</button>
+                  <button class="button is-small" onclick="setSokobanGif('budget5',this)">Budget=5</button>
+                </div>
+                <img id="sokoban-demo"
+                     src="./static/gifs/sokoban/baseline.gif"
                      alt="VALET agent playing Sokoban."
                      style="width: 100%; border-radius: 8px;">
-                <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  VALET agent navigating the Sokoban environment.
+                <p id="sokoban-caption" class="mt-2" style="font-size: 0.82em; color: #555;">
+                  Baseline PPO agent (no oracle).
                 </p>
               </div>
               <div class="column is-two-thirds">
-                <img src="./static/images/sok_vary_cost.png"
+                <img src="./static/images/cost_curves_acc100.png"
                      alt="Sokoban training curves under varying oracle costs."
                      style="width: 100%; border-radius: 4px;">
                 <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                  <strong>Figure 9.</strong> Training curves on Sokoban under varying oracle
+                  <strong>Figure 10.</strong> Training curves on Sokoban under varying oracle
                   costs. Oracle-assisted agents consistently outperform the PPO baseline,
                   with oracle usage self-regulating as cost increases.
                 </p>
@@ -1038,14 +1121,27 @@
 
             <!-- Accuracy ablation -->
             <div class="has-text-centered mt-4 mb-2">
-              <img src="./static/images/sok_vary_acc.png"
+              <img src="./static/images/accuracy_lines.png"
                    alt="Sokoban results varying oracle accuracy."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 10.</strong> Sokoban results under varying oracle accuracy.
+                <strong>Figure 11.</strong> Sokoban results under varying oracle accuracy.
                 The agent stops querying below the accuracy threshold and benefits
                 increasingly from more reliable guidance, confirming the same behavior
                 observed on MiniGrid.
+              </p>
+            </div>
+
+            <!-- Linear cost schedule -->
+            <div class="has-text-centered mt-4 mb-2">
+              <img src="./static/images/linear_cost_schedule.png"
+                   alt="Sokoban results with a linear query cost schedule."
+                   style="width: 85%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 11.</strong> Sokoban training curves under a linearly increasing
+                query cost schedule. The cost starts at zero and rises gradually over training,
+                allowing the agent to rely on oracle guidance early on and progressively
+                internalize the policy as the cost disincentivizes querying.
               </p>
             </div>
 
@@ -1117,6 +1213,23 @@
               agents can learn not just <em>how</em> to act, but <em>when</em> to ask for help.
             </p>
 
+            <p>
+              Beyond these empirical findings, the transfer experiments reveal a deeper insight
+              into what VALET actually learns. Unlike a standard PPO agent, which memorizes
+              the sub-goal structure of a specific task and fails to generalize, VALET learns a
+              fundamentally more flexible behavior: how to navigate toward a desired object by
+              delegating the question of <em>which</em> object to pursue to the oracle. The task
+              identity is never hardcoded into the policy, it is resolved at runtime through
+              queries. This makes VALET a natural foundation for a universal navigate-to-goal
+              agent: one that relies on the oracle when no target is visible, navigates
+              autonomously once a target enters its field of view, and queries again when faced
+              with ambiguity among multiple visible objects. The Fetch task, where the agent must
+              identify and reach the correct object among several simultaneously visible ones,
+              directly instantiates this ideal regime, and training on it would bring VALET
+              closest to this vision. We believe this is the most promising direction for future
+              work, and that VALET provides a principled framework to pursue it.
+            </p>
+
             <h3 class="title is-4" id="ccl-limitations">Limitations</h3>
 
             <p><strong>Compute constraints.</strong>
@@ -1149,6 +1262,14 @@
               agent could serve as an automatic proxy for VLM quality, without any labeled data.
               This could provide a lightweight, deployment-time method for evaluating and
               comparing VLMs in decision-making settings.
+            </p>
+
+            <p><strong>Training on Fetch toward a universal navigate-to-goal agent.</strong>
+              The Fetch task directly instantiates the ideal VALET behavior: identify the correct
+              target among multiple visible objects and navigate to it. Training on Fetch would
+              expose the agent to a richer object vocabulary, resolving the detection failures
+              observed in MultiRoom, and bring VALET closer to a generalizable navigate-to-goal
+              agent. Due to time constraints, this was not explored in this work.
             </p>
 
             <p><strong>Transfer to continuous environments.</strong>

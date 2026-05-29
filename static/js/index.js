@@ -1,5 +1,27 @@
 window.HELP_IMPROVE_VIDEOJS = false;
 
+// ── Sokoban interactive GIF picker ────────────────────────────────────────────
+var SOKOBAN_CAPTIONS = {
+  baseline:     'Baseline PPO agent (no oracle).',
+  oracle_free:  'Free perfect oracle (cost=0, acc=100%): agent queries nearly every step.',
+  oracle_cost05:'Oracle at cost=0.5: agent self-regulates query frequency.',
+  budget1:      'Budget oracle — 1 query per episode: agent must choose the critical moment.',
+  budget3:      'Budget oracle — 3 queries per episode: strategic querying.',
+  budget5:      'Budget oracle — 5 queries per episode.',
+};
+
+function setSokobanGif(key, btn) {
+  document.querySelectorAll('#sokoban-buttons .button').forEach(function(b) {
+    b.classList.remove('is-dark');
+  });
+  btn.classList.add('is-dark');
+  // Cache-bust so the GIF restarts from frame 1
+  document.getElementById('sokoban-demo').src =
+    './static/gifs/sokoban/' + key + '.gif?t=' + Date.now();
+  document.getElementById('sokoban-caption').textContent = SOKOBAN_CAPTIONS[key];
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 var INTERP_BASE = "./static/interpolation/stacked";
 var NUM_INTERP_FRAMES = 240;
 
