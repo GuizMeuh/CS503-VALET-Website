@@ -115,7 +115,7 @@
   <a class="nav-section" href="#method">Method</a>
   <a class="nav-sub" href="#method-rl">A. RL Agent</a>
   <a class="nav-sub" href="#method-vlm">B. VLM</a>
-  <a class="nav-sub" href="#method-transfer">C. Transfer</a>
+  <a class="nav-sub" href="#method-transfer">C. Zero-Shot Transfer</a>
   <a class="nav-section" href="#results">Experiments</a>
   <a class="nav-sub" href="#exp-bfs">A. BFS Oracle</a>
   <a class="nav-sub" href="#exp-vlm-bench">B. VLM Bench.</a>
@@ -378,9 +378,12 @@
               <strong>Most closely related.</strong> Merler et al. [<a href="#ref9">9</a>] augment
               a PPO agent with selective VLM supervision triggered by the entropy of the policy,
               the idea being that high-entropy states signal uncertainty and warrant guidance. VALET
-              shares this intuition but goes further: instead of a hand-crafted entropy threshold,
-              the query is an explicit action in the MDP. The agent discovers the cost–benefit
-              trade-off on its own through the RL objective.
+              shares this intuition but goes further on two fronts: first, instead of a hand-crafted
+              entropy threshold, the query is an explicit action in the MDP, so the agent discovers
+              the cost–benefit trade-off on its own through the RL objective; second, Merler et al.
+              use the VLM guidance as a behaviour cloning signal, directly imitating the suggested
+              action via a supervised loss, whereas VALET treats the oracle response as part of the
+              environment, letting the agent freely choose whether to follow it or not.   
             </p>
           </div>
         </div>
@@ -399,18 +402,202 @@
           <div class="content has-text-justified">
 
             <h3 class="title is-4" id="method-rl">A. Reinforcement Learning Agent</h3>
+            <style>
+              .vdf{font-family:'Google Sans','Noto Sans',sans-serif;padding:1.5rem 0}
+              .vdf-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+              .vdf-header{padding:1.2rem 1.5rem .8rem;border-bottom:1px solid #f0f0f0}
+              .vdf-title{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#888;margin:0 0 .25rem}
+              .vdf-subtitle{font-size:1rem;font-weight:500;color:#1a1a1a;margin:0}
+              .vdf-controls{display:flex;gap:.6rem;padding:.9rem 1.5rem;background:#fafafa;border-bottom:1px solid #f0f0f0;align-items:center}
+              .vdf-controls span{font-size:.78rem;color:#888;font-weight:500;margin-right:.2rem}
+              .vdf-btn{padding:.35rem .95rem;border-radius:99px;border:1.5px solid;font-family:inherit;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;background:#fff}
+              .vdf-btn-normal{border-color:#1D9E75;color:#1D9E75}
+              .vdf-btn-normal:hover,.vdf-btn-normal.active{background:#1D9E75;color:#fff}
+              .vdf-btn-query{border-color:#D85A30;color:#D85A30}
+              .vdf-btn-query:hover,.vdf-btn-query.active{background:#D85A30;color:#fff}
+              .vdf-btn-reset{border-color:#d1d5db;color:#888}
+              .vdf-btn-reset:hover{background:#f3f4f6;border-color:#aaa;color:#555}
+              .vdf-svg-wrap{padding:1rem 1.5rem .5rem}
+              .vdf-insight{margin:.2rem 1.5rem 1rem;padding:.7rem 1rem;border-radius:8px;font-size:.82rem;line-height:1.6;display:none;border-left:3px solid}
+              .vdf-insight.show{display:block}
+              .vdf-insight.normal{background:#e8f8f2;border-color:#1D9E75;color:#0f6e56}
+              .vdf-insight.query{background:#fdf0ea;border-color:#D85A30;color:#993c1d}
 
+              .vdf-node rect{transition:fill .25s,stroke .25s}
+              .vdf-arr{transition:stroke .25s,opacity .3s}
+
+              .vdf-svg.show-normal .node-shared .nr{fill:#e8f8f2!important;stroke:#1D9E75!important}
+              .vdf-svg.show-normal .node-shared .nt,.vdf-svg.show-normal .node-shared .ns{fill:#0f6e56!important}
+              .vdf-svg.show-normal .node-normal .nr{fill:#e8f8f2!important;stroke:#1D9E75!important;stroke-width:2!important}
+              .vdf-svg.show-normal .node-normal .nt,.vdf-svg.show-normal .node-normal .ns{fill:#085041!important}
+              .vdf-svg.show-normal .arr-shared,.vdf-svg.show-normal .arr-normal{stroke:#1D9E75!important;stroke-dasharray:8 4;animation:vdf-flow .6s linear infinite}
+              .vdf-svg.show-normal .arr-query{opacity:.2}
+              .vdf-svg.show-normal .node-query{opacity:.3}
+              .vdf-svg.show-normal .node-oracle{opacity:.3}
+
+              .vdf-svg.show-query .node-shared .nr{fill:#fdf0ea!important;stroke:#D85A30!important}
+              .vdf-svg.show-query .node-shared .nt,.vdf-svg.show-query .node-shared .ns{fill:#993c1d!important}
+              .vdf-svg.show-query .node-query .nr{fill:#fdf0ea!important;stroke:#D85A30!important;stroke-width:2!important}
+              .vdf-svg.show-query .node-query .nt,.vdf-svg.show-query .node-query .ns{fill:#993c1d!important}
+              .vdf-svg.show-query .node-oracle .nr{fill:#eef0fb!important;stroke:#534AB7!important;stroke-width:2!important}
+              .vdf-svg.show-query .node-oracle .nt,.vdf-svg.show-query .node-oracle .ns{fill:#26215C!important}
+              .vdf-svg.show-query .arr-shared,.vdf-svg.show-query .arr-query,.vdf-svg.show-query .arr-oracle{stroke:#D85A30!important;stroke-dasharray:8 4;animation:vdf-flow .6s linear infinite}
+              .vdf-svg.show-query .arr-normal{opacity:.2}
+              .vdf-svg.show-query .node-normal{opacity:.3}
+              .vdf-svg.show-query .cost-badge rect{fill:#D85A30!important;stroke:#993c1d!important}
+              .vdf-svg.show-query .cost-badge text{fill:#fff!important}
+
+              @keyframes vdf-flow{to{stroke-dashoffset:-12}}
+              </style>
+
+              <div class="vdf">
+              <div class="vdf-card">
+
+                <div class="vdf-header">
+                  <p class="vdf-title">Method — VALET framework</p>
+                  <p class="vdf-subtitle">How the agent decides between acting and asking for help</p>
+                </div>
+
+                <div class="vdf-controls">
+                  <span>Simulate:</span>
+                  <button class="vdf-btn vdf-btn-normal" id="vdf-btn-n" onclick="vdfSetPath('normal')">▶ Normal episode</button>
+                  <button class="vdf-btn vdf-btn-query" id="vdf-btn-q" onclick="vdfSetPath('query')">▶ Query episode</button>
+                  <button class="vdf-btn vdf-btn-reset" onclick="vdfSetPath(null)">Reset</button>
+                </div>
+
+                <div class="vdf-svg-wrap">
+                <svg class="vdf-svg" id="vdf-svg" width="100%" viewBox="0 0 640 510" role="img">
+                  <title>VALET decision flow</title>
+                  <desc>The agent observes state s_t, the policy selects from A' = A union {query}. Normal actions execute directly; the query action invokes the oracle which returns a* at cost c.</desc>
+                  <defs>
+                    <marker id="vdf-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </marker>
+                  </defs>
+
+                  <!-- Observation -->
+                  <g class="vdf-node node-shared">
+                    <rect class="nr" x="220" y="30" width="200" height="44" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="320" y="52" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Observation s_t</text>
+                  </g>
+
+                  <!-- obs → policy -->
+                  <line class="vdf-arr arr-shared" x1="320" y1="74" x2="320" y2="100" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+
+                  <!-- Policy -->
+                  <g class="vdf-node node-shared">
+                    <rect class="nr" x="210" y="100" width="220" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="320" y="122" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Policy π(a | s)</text>
+                    <text class="ns" x="320" y="143" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">A′ = A ∪ {query}</text>
+                  </g>
+
+                  <!-- Fork left (normal) -->
+                  <path class="vdf-arr arr-normal" d="M320,160 L320,186 L168,186 L168,210" fill="none" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+                  <!-- Fork right (query) -->
+                  <path class="vdf-arr arr-query" d="M320,160 L320,186 L472,186 L472,210" fill="none" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+
+                  <!-- Fork labels -->
+                  <text x="242" y="179" text-anchor="middle" font-family="Google Sans,Noto Sans,sans-serif" font-size="10.5" fill="#94a3b8">a ∈ A</text>
+                  <text x="398" y="179" text-anchor="middle" font-family="Google Sans,Noto Sans,sans-serif" font-size="10.5" fill="#94a3b8">a = query</text>
+
+                  <!-- Normal action box -->
+                  <g class="vdf-node node-normal">
+                    <rect class="nr" x="88" y="210" width="160" height="54" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="168" y="229" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Normal action</text>
+                    <text class="ns" x="168" y="249" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">a ∈ A, no cost</text>
+                  </g>
+
+                  <!-- Query action box -->
+                  <g class="vdf-node node-query">
+                    <rect class="nr" x="392" y="210" width="160" height="54" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="472" y="229" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Query action</text>
+                    <text class="ns" x="472" y="249" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">ask the oracle</text>
+                  </g>
+
+                  <!-- normal → execute -->
+                  <line class="vdf-arr arr-normal" x1="168" y1="264" x2="168" y2="316" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+                  <!-- query → oracle -->
+                  <line class="vdf-arr arr-query" x1="472" y1="264" x2="472" y2="316" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+
+                  <!-- Execute normal -->
+                  <g class="vdf-node node-normal">
+                    <rect class="nr" x="78" y="316" width="180" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="168" y="337" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Execute a</text>
+                    <text class="ns" x="168" y="358" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">obs′, reward r</text>
+                  </g>
+
+                  <!-- Oracle box -->
+                  <g class="vdf-node node-oracle">
+                    <rect class="nr" x="392" y="316" width="160" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="472" y="337" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Oracle</text>
+                    <text class="ns" x="472" y="358" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">returns a*</text>
+                  </g>
+
+                  <!-- oracle → execute a* -->
+                  <line class="vdf-arr arr-oracle" x1="472" y1="376" x2="472" y2="418" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#vdf-arrow)"/>
+
+                  <!-- Cost badge -->
+                  <g class="cost-badge">
+                    <rect x="482" y="388" width="28" height="17" rx="8.5" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1"/>
+                    <text x="496" y="396.5" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="10" font-weight="600" fill="#888">−c</text>
+                  </g>
+
+                  <!-- Execute a* -->
+                  <g class="vdf-node node-query">
+                    <rect class="nr" x="377" y="418" width="190" height="60" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+                    <text class="nt" x="472" y="439" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="13" font-weight="500" fill="#374151">Execute a*</text>
+                    <text class="ns" x="472" y="459" text-anchor="middle" dominant-baseline="central" font-family="Google Sans,Noto Sans,sans-serif" font-size="11" fill="#6b7280">obs′, reward r − c</text>
+                  </g>
+                </svg>
+                </div>
+
+                <div class="vdf-insight normal" id="vdf-insight-n">
+                  <strong>Normal path.</strong> The agent selects a ∈ A directly. The action is executed in the environment and returns a new observation and reward r, with no penalty.
+                </div>
+                <div class="vdf-insight query" id="vdf-insight-q">
+                  <strong>Oracle path.</strong> The agent selects <em>query</em>. The oracle (BFS or VLM) provides a suggested action a*, which is <strong>executed directly</strong> — the agent does not get to accept or reject it. The agent pays a fixed cost <strong>c</strong>, learning to query only when the benefit outweighs the penalty.
+                </div>
+
+              </div>
+              </div>
+
+              <script>
+              function vdfSetPath(p) {
+                var svg = document.getElementById('vdf-svg');
+                var bn  = document.getElementById('vdf-btn-n');
+                var bq  = document.getElementById('vdf-btn-q');
+                var in_ = document.getElementById('vdf-insight-n');
+                var iq  = document.getElementById('vdf-insight-q');
+                svg.className.baseVal = 'vdf-svg';
+                bn.classList.remove('active');
+                bq.classList.remove('active');
+                in_.classList.remove('show');
+                iq.classList.remove('show');
+                if (p === 'normal') {
+                  svg.classList.add('show-normal');
+                  bn.classList.add('active');
+                  in_.classList.add('show');
+                } else if (p === 'query') {
+                  svg.classList.add('show-query');
+                  bq.classList.add('active');
+                  iq.classList.add('show');
+                }
+              }
+            </script>
             <p><strong>Framework Overview.</strong>
-              VALET augments a standard Proximal Policy Optimization (PPO) agent with a dedicated
+              VALET augments a standard Proximal Policy Optimization (PPO) agent
+              [<a href="#ref12">12</a>] with a dedicated
               <em>query</em> action that allows the agent to solicit a suggested action from an
               external expert. Formally, given an environment with action space \(\mathcal{A}\),
               we extend it to \(\mathcal{A}' = \mathcal{A} \cup \{\texttt{query}\}\). When the
-              agent selects \(\texttt{query}\), it receives an expert-suggested action
-              \(a^* \in \mathcal{A}\) as part of its next observation, and incurs a fixed query
-              cost \(c \geq 0\) subtracted from the reward signal. All other actions are executed
-              normally without any penalty. This formulation is entirely endogenous: no external
-              scheduler or heuristic determines when to query. The agent discovers the cost-benefit
-              trade-off on its own through the RL objective.
+              agent selects \(\texttt{query}\), the expert-suggested action
+              \(a^* \in \mathcal{A}\) is <strong>executed directly</strong> in the environment
+              in place of the query, the agent does not get to accept or reject it. The agent
+              also incurs a fixed query cost \(c \geq 0\) subtracted from the reward signal,
+              discouraging blind delegation. All other actions are executed normally without any
+              penalty. This formulation is entirely endogenous: no external scheduler or heuristic
+              determines when to query. The agent discovers the cost–benefit trade-off on its own
+              through the RL objective.
             </p>
 
             <p><strong>Training Setup.</strong>
@@ -421,12 +608,12 @@
               We evaluate VALET on two environments of increasing complexity:
             </p>
             <ul>
-              <li><strong>MiniGrid-DoorKey-8×8</strong> [<a href="#ref10">10</a>]: a partially
+              <li><strong>MiniGrid-DoorKey</strong> [<a href="#ref10">10</a>]: a partially
                 observable grid-world in which the agent must pick up a key, unlock a door, and
-                reach a goal tile. The sparse reward structure and sequential sub-goals make it a
-                canonical benchmark for sparse-reward RL. We also extend this environment to a
-                16×16 grid with a restricted field of view to test scalability under stronger
-                partial observability.</li>
+                reach a green goal tile. The task requires solving two sequential sub-goals under
+                sparse rewards, making it a standard benchmark for sparse-reward RL. We evaluate
+                on both the 8×8 and 16×16 variants; the larger grid introduces a reduced field
+                of view to test the agent under stronger partial observability.</li>
               <li><strong>Gym-Sokoban</strong> [<a href="#ref11">11</a>]: a combinatorial puzzle
                 in which the agent must push boxes onto target locations. Unlike MiniGrid, actions
                 are irreversible and dead-ends are reachable after only a few mistakes, making
@@ -438,29 +625,29 @@
               Breadth-First Search (BFS) oracle provides the optimal next action given the full
               environment state, serving as a perfect upper bound. Second, a noisy BFS oracle
               returns the optimal action with probability \(p\) and a random action otherwise,
-              allowing us to simulate imperfect guidance at controllable accuracy without the
-              computational cost of running a real VLM at every RL step. Third, a real VLM
-              (Qwen2-VL with a verbose prompt) is evaluated as a drop-in replacement, serving
-              as a practical but suboptimal expert.
+              allowing us to simulate imperfect guidance at controllable accuracy and at a
+              fraction of the cost of querying a real VLM. Third, real VLMs are evaluated as
+              drop-in replacements: we select WeThink-Qwen2.5-VL 7B [<a href="#ref13">13</a>],
+              a vision-language model fine-tuned for general-purpose reasoning via reinforcement
+              learning, as our VLM oracle following a comparative benchmark of open-weight models.
             </p>
 
             <h3 class="title is-4" id="method-vlm">B. Vision-Language Model</h3>
 
             <p><strong>Model Selection.</strong>
-              We evaluate eight open-weight VLMs (2-8B parameters), including Qwen2-VL,
-              Qwen2.5-VL, InternVL2.5, InternVL3, SmolVLM, and WeThink-Qwen2.5VL. Models are
+              We evaluate several open-weight VLMs. Models are
               served via vLLM with deterministic decoding, and prompted with the top-down RGB
-              observation alongside a brief textual state descriptor. We compare three prompt
-              phrasings (<em>if_then</em>, <em>negative_rules</em>, and <em>verbose</em>) and
+              observation (global view of the state) alongside a brief textual state descriptor. We compare different prompt
+              phrasings and
               report <strong>macro-F1</strong> as the primary metric, since the action
               distribution is imbalanced and several models exhibit mode collapse.
             </p>
 
             <p><strong>Temporal Context.</strong>
               We also investigate whether providing a sliding window of past frames improves
-              predictions, testing two history modalities: past actions as a text list, and past
-              frames as stacked images.
-            </p>
+              predictions, giving the VLM past images and past actions as additional context.
+              Full results and model comparisons are presented in <a href="#exp-vlm-bench">Section IV-B</a>.
+
 
             <h3 class="title is-4" id="method-transfer">C. Zero-Shot Transfer</h3>
 
@@ -531,13 +718,12 @@
 
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/doorkey_bench.png"
-                   alt="Training curves for PPO on MiniGrid-DoorKey-16x16-v0 under varying oracle query costs."
+                   alt="Training curves on MiniGrid-DoorKey-16x16 under varying oracle query costs."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 1.</strong> Training curves on MiniGrid-DoorKey-8×8-v0 under
-                varying oracle costs \(c \in \{0.00, 0.01, 0.02, 0.05\}\). From left to right:
-                episodic return, success rate, and oracle usage. Shaded regions indicate variance
-                across seeds. Dashed line: unguided PPO baseline.
+                <strong>Figure 1.</strong> Training curves on MiniGrid-DoorKey-8×8 under
+                varying oracle costs \(c \in \{0.00, 0.01, 0.02, 0.05\}\). Shaded regions indicate variance
+                across seeds. Black line: unguided PPO baseline.
               </p>
             </div>
 
@@ -573,9 +759,6 @@
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
                 <strong>Figure 2.</strong> Training curves on MiniGrid-DoorKey-16×16 with partial
                 observability, under a sweep of oracle costs (blue to orange, increasing cost).
-                From left to right: episodic return, success rate, oracle usage, and oracle
-                queries per episode. VALET consistently outperforms the PPO baseline (dashed),
-                with larger gains than on the 8×8 grid.
               </p>
             </div>
 
@@ -1193,6 +1376,15 @@
             <p id="ref11">[11] M.-P. B. Schrader, "gym-sokoban,"
               <a href="https://github.com/mpSchrader/gym-sokoban" target="_blank">https://github.com/mpSchrader/gym-sokoban</a>,
               2018.
+            </p>
+            <p id="ref12">[12] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov,
+              "Proximal policy optimization algorithms,"
+              <em>arXiv:1707.06347</em>, 2017.
+            </p>
+            <p id="ref13">[13] J. Yang, F. Ma, Z. Wang, D. Yin, K. Rong, F. Rao, and R. Zhang,
+              "WeThink: Toward general-purpose vision-language reasoning via reinforcement learning,"
+              <em>arXiv:2506.07905</em>, 2025.
+              <a href="https://arxiv.org/abs/2506.07905" target="_blank">[arXiv]</a>
             </p>
           </div>
         </div>
