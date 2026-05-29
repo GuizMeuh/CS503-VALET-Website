@@ -414,12 +414,7 @@
             </p>
 
             <p><strong>Training Setup.</strong>
-              We train all agents using PPO with a clipped surrogate objective, generalized
-              advantage estimation (GAE), and an entropy bonus to encourage exploration. The
-              policy and value networks share a convolutional encoder that processes the top-down
-              RGB observation. The observation is augmented with a binary flag indicating whether
-              the last action was a query; when a query was made, the expert-suggested action is
-              encoded as a one-hot vector.
+              The policy and value networks share a convolutional encoder that processes the RGB observation — a top-down full view or a partial egocentric view depending on the setting. The oracle is available as an additional action; when selected, it executes the BFS-optimal action and incurs a reward penalty of cost c.
             </p>
 
             <p><strong>Environments.</strong>
@@ -584,6 +579,8 @@
               </p>
             </div>
 
+            <h4 class="title is-5 mt-5">Interpretability of VALET</h4>
+
             <div class="columns is-vcentered mt-4">
               <div class="column is-half">
                 <p>
@@ -596,13 +593,13 @@
                   the expert when guidance is needed. The video shows this behavior in action.
                   This is a case of <em>maximal delegation</em>: inspecting the action probability
                   distribution reveals that the agent assigns nearly all probability mass to just
-                  two actions — going forward and querying the oracle. Even to turn, the agent
+                  two actions, going forward and querying the oracle. Even to turn, the agent
                   calls the oracle rather than deciding autonomously.
                   As the query cost increases, this behavior evolves: the agent gradually reallocates
                   probability to other actions, learning task-specific sub-policies such as opening
                   a door when standing in front of one, or picking up the key when it is in reach,
                   without needing to consult the oracle. This internalization of sub-goals directly
-                  explains the progressive decrease in oracle usage as cost grows — and its complete
+                  explains the progressive decrease in oracle usage as cost grows, and its complete
                   disappearance at the highest cost values.
                   A key limitation, however, is that replacing the BFS oracle with a VLM of
                   equivalent quality requires a model capable of near-optimal action prediction,
@@ -618,22 +615,33 @@
 
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/cost_001.png"
-                   alt="Action probability distribution during training for cost c=0.01."
+                   alt="Training curves for VALET with c=0.01 on MiniGrid-DoorKey-16x16."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Action probability distribution throughout training for
-                \(c = 0.01\) on MiniGrid-DoorKey-16×16. The agent initially concentrates almost
-                all probability on <em>forward</em> and <em>query</em>, then progressively
-                reallocates mass to task-specific actions (door opening, key pickup) as the
-                policy matures.
+                <strong>Figure 3.</strong> Training curves for \(c = 0.01\) on MiniGrid-DoorKey-16×16.
+                From left to right: episodic return, success rate, oracle usage, and oracle queries
+                per episode. The agent reaches 100% success rate and converges significantly faster
+                than the PPO baseline. Oracle usage spikes early around 70%, then stabilizes at
+                ~40% as the policy matures.
               </p>
             </div>
+
+            <p>
+              Figure 3 confirms the progression described above. Early in training, the agent
+              queries the oracle heavily (~70%), relying almost entirely on external guidance to
+              navigate the task. As training progresses, oracle usage stabilizes at ~40%: the agent
+              has internalized the most frequent sub-goals and only calls the oracle when genuinely
+              uncertain. This self-regulated decay in oracle dependence, combined with a 100% success
+              rate and markedly faster convergence than the PPO baseline, illustrates the core
+              benefit of VALET: expert supervision is used when it matters most, and progressively
+              replaced by learned autonomy.
+            </p>
 
             <h3 class="title is-4" id="exp-vlm-bench">B. VLM Benchmarking</h3>
 
             <p>
               Before integrating a real VLM as the oracle, we benchmark candidate models on a
-              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 3 shows the
+              300-sample MiniGrid evaluation set annotated by the BFS oracle. Figure 4 shows the
               macro-F1 vs. latency trade-off across models and prompt variants.
             </p>
 
