@@ -234,12 +234,15 @@
             following a hand-crafted schedule.
           </p>
           <p>
-            Experiments on MiniGrid-DoorKey and Sokoban show faster convergence,
-            reduced variance, and self-regulated oracle usage. The querying behavior transfers
-            zero-shot to unseen tasks, and the agent naturally stops querying when the oracle is
-            not reliable enough. Furthermore, the framework enables training a single navigation
-            model across multiple tasks, allowing the agent to generalize its behavior without
-            task-specific retraining. VALET demonstrates that RL agents can learn not just
+            On MiniGrid-DoorKey, VALET shows faster convergence, reduced variance, and
+            self-regulated oracle usage that decays as the policy matures. On Gym-Sokoban,
+            a significantly harder domain with irreversible actions, VALET enables task
+            success that an unguided PPO baseline cannot achieve, but the agent learns to
+            delegate sustainably rather than internalize the task, with oracle dependency
+            persisting throughout training. In both settings, the querying behavior transfers
+            zero-shot to unseen tasks, and the agent naturally stops querying when the oracle
+            is not reliable enough, enabling our framework to benchmark the utility of VLMs
+            for different tasks. VALET demonstrates that RL agents can learn not just
             <em>how</em> to act, but <em>when</em> to ask for help.
           </p>
         </div>
@@ -345,6 +348,7 @@
               <li>Does the agent learn to invoke the VLM <em>selectively</em> and efficiently?</li>
               <li>How does the performance–cost trade-off evolve as query penalty \(c\) varies?</li>
               <li>Does the learned querying behavior transfer zero-shot to unseen tasks?</li>
+              <li>Does the agent learn to rely exclusively on the expert, or does it internalize guidance and become increasingly autonomous?</li>
             </ul>
           </div>
         </div>
@@ -390,8 +394,9 @@
               entropy threshold, the query is an explicit action in the MDP, so the agent discovers
               the cost–benefit trade-off on its own through the RL objective; second, Merler et al.
               use the VLM guidance as a behaviour cloning signal, directly imitating the suggested
-              action via a supervised loss, whereas VALET treats the oracle response as part of the
-              environment, letting the agent freely choose whether to follow it or not.   
+              action via a supervised loss, whereas VALET executes the oracle's action immediately
+              upon query, with the agent's decision being whether to invoke the oracle at all
+              rather than whether to obey it.
             </p>
           </div>
         </div>
@@ -686,7 +691,10 @@
                 and all Sokoban experiments (56×56×3 RGB input, normalised to [0,1]). The first conv
                 downsamples spatially (stride 2); adaptive pooling normalises the feature map to
                 64×8×8 = 4096 before the shared FC layer. Policy and value heads use orthogonal
-                initialisation (std=0.01 and 1.0 respectively). For DoorKey-8×8
+                initialisation (std=0.01 and 1.0 respectively). For the budget-constrained variant
+                the input carries a 4th channel encoding remaining query budget as a
+                spatially-constant uint8 value; these checkpoints are not compatible with
+                standard 3-channel weights. For DoorKey-8×8
                 (full obs, 40×40×3) the pool is omitted and the flatten projects directly to 256.
               </p>
             </div>
@@ -913,7 +921,7 @@
             <p>
               Before integrating a real VLM as the oracle, we benchmark candidate models on a
               300-sample MiniGrid evaluation set annotated by the BFS oracle. As shown in
-              <strong>Figure 3</strong>, we report the macro-F1 vs. latency trade-off across
+              <strong>Figure 4</strong>, we report the macro-F1 vs. latency trade-off across
               models, inference modes, and prompt variants — top-left being optimal.
               WeThink-Qwen2.5-VL 7B in <em>thinking</em> mode achieves the highest macro-F1
               (~51%), though no model-prompt combination exceeds 52%. Prompt phrasing alone
@@ -929,7 +937,7 @@
                   alt="Macro-F1 vs. latency for VLMs across modes and prompt variants."
                   style="width: 75%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 3.</strong> Macro-F1 vs. median inference latency across models,
+                <strong>Figure 4.</strong> Macro-F1 vs. median inference latency across models,
                 inference modes (color) and prompt variants (shape). Top-left is best.
               </p>
             </div>
@@ -1162,134 +1170,243 @@
               direction for future investigation.
             </p>
 
-            <h3 class="title is-4" id="exp-sokoban">F. Extension to Sokoban</h3>
-
+<h3 class="title is-4" id="exp-sokoban">F. Extension to Gym-Sokoban</h3>
+            
             <p>
-              To verify that VALET generalizes beyond MiniGrid, we train and evaluate it on
-              Gym-Sokoban, a significantly harder environment with irreversible actions and
-              longer planning horizons. Sokoban is a combinatorial puzzle in which the agent
-              must push boxes onto target locations; actions are irreversible, and dead-ends
-              are reachable after only a few bad moves. We build a BFS oracle that finds the
-              optimal action given full board state. The same VALET framework applies without
-              modification: the agent learns to self-regulate its oracle usage as a function of
-              query cost, and the accuracy ablation confirms the same threshold behavior as on
-              MiniGrid. VALET works.
+              We evaluate the framework on <strong>Gym-Sokoban</strong>
+              (<code class="is-size-7">Sokoban-small-v0</code>) to see if the
+              querying behavior generalizes to a combinatorial puzzle. The
+              environment features a $7 \times 7$ board with two boxes rendered
+              as $56 \times 56 \times 3$ RGB pixel images. Sokoban introduces
+              irreversible actions. Pushing a box into a corner or against an
+              unaligned wall creates a deadlock, making the episode unsolveable.
+              The environment rewards partial progress by giving $+1.0$ for
+              pushing a box onto a target and penalizes errors with $-1.0$ for
+              moving it off. It encourages efficiency by subtracting a $-0.1$
+              step penalty for every action taken, culminating in a final
+              $+10.0$ reward for success. Because mistakes accumulate as
+              continuous step penalties or permanent deadlocks, the environment
+              demands accurate long-term planning.
             </p>
 
-            <!-- Interactive GIF picker (centered) -->
-            <div class="columns is-centered mt-4">
-              <div class="column is-one-third has-text-centered">
-                <div id="sokoban-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
-                  <button class="button is-small is-dark" onclick="setSokobanGif('baseline',this)">Baseline</button>
-                  <button class="button is-small" onclick="setSokobanGif('oracle_free',this)">Free Oracle</button>
-                  <button class="button is-small" onclick="setSokobanGif('oracle_cost01',this)">Cost=0.1</button>
-                  <button class="button is-small" onclick="setSokobanGif('oracle_cost05',this)">Cost=0.5</button>
-                  <button class="button is-small" onclick="setSokobanGif('oracle_cost08',this)">Cost=0.8</button>
-                  <button class="button is-small" onclick="setSokobanGif('oracle_linear',this)">Linear</button>
-                </div>
-                <img id="sokoban-demo"
-                     src="./static/gifs/sokoban/baseline.gif"
-                     alt="VALET agent playing Sokoban."
-                     style="width: 100%; border-radius: 8px;">
-                <p id="sokoban-caption" class="mt-2" style="font-size: 0.82em; color: #555;">
-                  Baseline PPO agent (no oracle).
-                </p>
-              </div>
-            </div>
+            <p>
+              We implement an identical baseline-versus-oracle setup as the
+              MiniGrid experiments. A custom Breadth-First Search (BFS) oracle
+              calculates the optimal action sequence given the full board state,
+              and a discrete <code class="is-size-7">query_oracle</code> action
+              allows the agent to execute the optimal step at a reward cost $c$.
+              Although this Sokoban task provides a full view of the board, the
+              policy and value networks reuse the MiniGrid partial-observation CNN
+              architecture because both environments share identical $56 \times 56 \times 3$
+              input dimensions.
+            </p>
 
-            <!-- Figure 10 full-width below GIF -->
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/cost_curves_acc100.png"
                    alt="Sokoban training curves under varying oracle costs."
                    style="width: 90%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 10.</strong> Training curves on Gym-Sokoban (small, 7×7 board)
-                under oracle costs \(c \in \{0, 0.1, 0.5, 0.8\}\). From left to right:
-                episodic return, success rate, and oracle queries per episode.
-                Oracle-assisted agents converge significantly faster than the unguided PPO
-                baseline (dashed), and oracle usage self-regulates as cost increases — higher
-                costs yield fewer queries without sacrificing final performance.
+                <strong>Figure 10.</strong> Training curves on Gym-Sokoban under fixed
+                oracle costs $c \in \{0, 0.1, 0.3, 0.5, 0.8, 1.0\}$ compared against an unguided
+                PPO baseline (dashed black line).
               </p>
             </div>
 
-            <!-- Accuracy ablation -->
-            <p class="mt-4">
-              As with the MiniGrid noisy oracle experiment (see <a href="#exp-noisy">Section D</a>),
-              Sokoban exhibits a clear accuracy threshold: below it, the agent ignores the oracle
-              entirely; above it, both success rate and query usage increase sharply with oracle
-              reliability. Figure 11 shows final evaluation metrics as a function of oracle
-              accuracy, with one curve per query cost. The results confirm that the VALET
-              framework is not MiniGrid-specific — the same self-regulating threshold behavior
-              emerges on a fundamentally harder planning environment.
+            <p>
+              The PPO baseline struggles to learn on this domain, flattening at
+              a 10% success rate. As shown in <strong>Figure 10</strong>, we find
+              a strong correlation between success rate and oracle usage. For low
+              cost oracle configurations, query usage climbs during training and
+              saturates near 90%. This indicates that the agent learns to depend
+              heavily on external guidance. This behavior contrasts with the
+              MiniGrid results, where the agent internalized easy, visible sub-goals
+              like driving directly to an open key. Sokoban features few trivial states,
+              incentivizing a policy of sustained delegation. Agents trained under high cost oracles
+              struggle to solve the puzzles, though the $c=0.5$ oracle shows a slowly increasing trend in oracle usage
+              and success rate. It would be interesting to extend the training time for these ablations to see the
+              training dynamics. (Note that the raw oracle cost is higher for the Sokoban environment due to
+              the larger rewards present.)
             </p>
-            <div class="has-text-centered mt-3 mb-2">
-              <img src="./static/images/accuracy_lines.png"
-                   alt="Sokoban results varying oracle accuracy."
-                   style="width: 85%; border-radius: 4px;">
-              <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 11.</strong> Final metrics on Sokoban vs. oracle accuracy \(p\),
-                one curve per query cost. From left to right: success rate, oracle usage, and
-                queries per episode. Below the accuracy threshold the agent stops querying
-                altogether; above it, performance and usage increase sharply — confirming the
-                same threshold behavior observed in the MiniGrid noisy oracle ablation
-                (<a href="#exp-noisy">Section D</a>).
-              </p>
-            </div>
 
-            <!-- Linear cost schedule -->
+            <h4 class="title is-5 mt-5">Linearly increasing Oracle Cost</h4>
+
+            <p>
+              We evaluate a linearly increasing cost schedule for the oracle queries to test whether the agent can bootstrap
+              learning with cheap external guidance and progressively wean itself off calling the oracle
+              as costs increase. The schedule ramps the query penalty from an initial
+              $c_{\text{init}} = 0.0$ up to a final $c_{\text{final}} = 2.0$ across the
+              first two million training steps, and then training continues for another million steps to see how the policy evolves under a high query cost.
+            </p>
+
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/linear_cost_schedule.png"
                    alt="Sokoban training curves under a linearly increasing query cost schedule."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 12.</strong> Training curves for the linearly increasing cost
-                schedule (\(c\) ramped from 0 to 2 over 2M steps, 3M total). The six panels
-                show: cost schedule, episodic return, reward, oracle usage, queries per episode,
-                and success-per-query ratio. The agent bootstraps on cheap oracle guidance early
-                in training, then progressively internalizes the policy as querying becomes
-                expensive, converging with strong performance and far fewer oracle calls than a
-                fixed low-cost agent.
+                <strong>Figure 11.</strong> Training curves under the linearly increasing
+                cost schedule.
               </p>
             </div>
 
-            <!-- Transfer results -->
-            <h4 class="title is-5 mt-5">Zero-Shot Transfer to FixedTarget-Sokoban</h4>
             <p>
-              We evaluate zero-shot transfer by deploying the Sokoban-trained VALET agent
-              directly on FixedTarget-Sokoban-v2, a variant in which box target locations are
-              fixed rather than randomized — a task never seen during training. As shown in
-              Figure 13, transfer performance tracks oracle accuracy closely: agents trained
-              with sufficiently reliable guidance transfer successfully, while those trained
-              without (or with a low-accuracy oracle) fail to generalize. This suggests that
-              oracle guidance shapes the learned representations in ways that support cross-task
-              transfer, not merely task-specific performance.
+              The results in <strong>Figure 11</strong> show that success rate decreases
+              in lockstep with falling oracle usage. We find no notable trends toward
+              improved oracle efficiency except at the end that could be due to random chance. The agent does not appear to use the temporary expert guidance
+              to learn the environment transitions: it only learns to call the oracle when the
+              action is cheap, losing performance as the penalty increases. This suggests that the underlying CNN
+              policy appears too limited to internalize the complex spatial planning required
+              for autonomous navigation on this task.
             </p>
-            <div class="has-text-centered mt-4">
-              <img src="./static/gifs/sokoban/transfer_fixedtarget.gif"
-                   alt="VALET agent on FixedTarget-Sokoban-v2."
-                   style="width: 33%; border-radius: 8px;">
+
+            <p class="mt-4">
+              Below you can see the trained policies interacting with the environment across different oracle configurations. 
+              Note that we added action stochasticity during evaluation for these gifs, so the most probable action is not always selected. 
+              This appears to significantly improve success rates across all cost ablations and the baseline.
+            </p>
+
+            <div class="columns is-centered mt-4">
+              <div class="column is-one-third has-text-centered">
+                <div id="sokoban-linear-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
+                  <button class="button is-small" onclick="setSokobanLinearGif('baseline',this)">Baseline</button>
+                  <button class="button is-small" onclick="setSokobanLinearGif('oracle_free',this)">Free Oracle</button>
+                  <button class="button is-small" onclick="setSokobanLinearGif('oracle_cost01',this)">Cost=0.1</button>
+                  <button class="button is-small" onclick="setSokobanLinearGif('oracle_cost05',this)">Cost=0.5</button>
+                  <button class="button is-small" onclick="setSokobanLinearGif('oracle_cost08',this)">Cost=0.8</button>
+                  <button class="button is-small is-dark" onclick="setSokobanLinearGif('oracle_linear',this)">Linear</button>
+                </div>
+                <img id="sokoban-linear-demo"
+                     src="./static/gifs/sokoban/oracle_linear.gif"
+                     alt="VALET agent playing Sokoban."
+                     style="width: 100%; border-radius: 8px;">
+              </div>
+            </div>
+
+            <h4 class="title is-5 mt-5">Effect of Oracle Accuracy</h4>
+            
+            <p>
+              We also conduct an accuracy ablation to replicate the realistic performance of an open-weight VLM by configuring a noisy oracle variant.
+              This oracle returns the true BFS-optimal action with a controlled
+              probability $p$, and returns a random, non-optimal action with a probability
+              of $1 - p$.
+            </p>
+            
+            <div class="has-text-centered mt-3 mb-2">
+              <img src="./static/images/accuracy_lines.png"
+                   alt="Sokoban results varying oracle accuracy."
+                   style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                VALET agent on FixedTarget-Sokoban-v2 (zero-shot).
+                <strong>Figure 12.</strong> Final metrics on Gym-Sokoban evaluated
+                against oracle accuracy $p \in [0, 1]$, mapped across independent query
+                cost curves. Panels display final success rate, oracle usage
+                percentage, and average queries per episode.
               </p>
             </div>
+
+            <p>
+              As detailed in <strong>Figure 12</strong>, task success is tied to oracle
+              usage, which scales based on query cost and reliability. The $c=0.1$ oracle is called
+              nearly 90% of the time even at 50% accuracy. Because the environment demands high
+              levels of external guidance, the agent tolerates a high failure rate when the oracle is
+              cheap. Imperfect oracles also yield a higher total number of queries per episode.
+              As costs increase, failures are tolerated less: the $c=0.3$ oracle is invoked
+              significantly only when its accuracy is 100%.
+            </p>
+
+            <h4 class="title is-5 mt-5">Zero-Shot Transfer to FixedTarget-Sokoban</h4>
+            
+            <p>
+              We evaluate cross-task generalization by deploying trained policies directly into
+              <code class="is-size-7">FixedTarget-Sokoban-v2</code>.
+              In this target domain, box targets are assigned distinct colors, forcing a strict
+              matching rule where each box must be pushed onto a target of the same color. This
+              adds an explicit constraint that is missing from the standard Sokoban environment, 
+              where any box can satisfy any open target state.
+            </p>
+
             <div class="has-text-centered mt-4 mb-2">
               <img src="./static/images/transfer_results.png"
                    alt="Zero-shot transfer results to FixedTarget-Sokoban."
                    style="width: 85%; border-radius: 4px;">
               <p class="mt-2" style="font-size: 0.82em; color: #555;">
-                <strong>Figure 13.</strong> Zero-shot transfer to FixedTarget-Sokoban-v2 (never
-                seen during training). Success rate, oracle usage, and queries per episode vs.
-                oracle accuracy \(p\), one curve per query cost. Transfer performance tracks
-                oracle accuracy — only policies trained with sufficient guidance quality
-                transfer successfully.
+                <strong>Figure 13.</strong> Zero-shot generalization performance on
+                FixedTarget-Sokoban-v2.
               </p>
             </div>
 
-            <!-- VLM note -->
+            <p>
+              The zero-shot transfer performance in <strong>Figure 13</strong> shows that low
+              cost oracles are used up to 100% of the time at $c=0.1$, maintaining a high query
+              rate even at 50% training accuracy to achieve decent success rates. High cost oracles
+              achieve lower success rates because they are invoked less often at similar accuracy
+              brackets. The policy shows clear cross-task generalization: it retains the learned
+              behavior of calling the oracle and leverages it to solve an completely unknown environment.
+            </p>
+
+            <p class="mt-4">
+              Below you can see the trained policies interacting with FixedTarget-Sokoban-v2 across different oracle configurations. 
+              As above, action stochasticity is applied during evaluation.
+            </p>
+
+            <div class="columns is-centered mt-4">
+              <div class="column is-one-third has-text-centered">
+                <div id="sokoban-transfer-buttons" class="buttons is-centered mb-2" style="flex-wrap:wrap; gap:4px;">
+                  <button class="button is-small is-dark" onclick="setSokobanTransferGif('perfect',this)">Acc=100%, c=0.1</button>
+                  <button class="button is-small" onclick="setSokobanTransferGif('acc75_c03',this)">Acc=75%, c=0.3</button>
+                  <button class="button is-small" onclick="setSokobanTransferGif('acc50_c01',this)">Acc=50%, c=0.1</button>
+                  <button class="button is-small" onclick="setSokobanTransferGif('baseline',this)">Baseline PPO</button>
+                </div>
+                <img id="sokoban-transfer-demo"
+                     src="./static/gifs/sokoban/transfer_fixedtarget_perfect.gif"
+                     alt="VALET agent on FixedTarget-Sokoban-v2."
+                     style="width: 100%; border-radius: 8px;">
+              </div>
+            </div>
+
+            <h4 class="title is-5 mt-5">Effect of a Query Budget Constraint</h4>
+            
+            <p>
+              As an alternative to soft reward penalties, we investigate a hard
+              budget variant that limits the agent to a maximum allocation of $N$
+              oracle queries per episode. The environment wrapper injects the remaining query
+              allowance directly into the model as a fourth observation channel. This creates
+              a spatially constant uint8 layer tracking the available budget alongside the standard
+              3-channel RGB image.
+            </p>
+
+            <div class="has-text-centered mt-3 mb-2">
+              <img src="./static/images/budget_curves.png"
+                   alt="Sokoban training curves under budget-constrained oracle (budget=3, budget=6)."
+                   style="width: 90%; border-radius: 4px;">
+              <p class="mt-2" style="font-size: 0.82em; color: #555;">
+                <strong>Figure 14.</strong> Training performance curves under strict
+                per-episode query allowances $N \in \{3, 6\}$ compared against a
+                standard unguided baseline.
+              </p>
+            </div>
+
+            <p>
+              As shown in <strong>Figure 14</strong>, budget-restricted agents outperform
+              the baseline. At 500K steps, the 3-query agent matches the baseline success rate and
+              exhausts its full query allowance every episode, which suggests a continuous requirement for
+              expert guidance. The 6-query agent achieves nearly twice the baseline success rate at roughly 40%.
+              Its average query count remains slightly below the hard ceiling of 6, which suggests that the
+              agent preserves its queries on easier environment instances that require fewer steps to solve.
+            </p>
+
             <p class="mt-4" style="font-size:0.9em; color:#666; border-left:3px solid #e5e7eb; padding-left:1em;">
-              <em>We did not evaluate a real VLM on Sokoban due to compute constraints; the
-              noisy oracle ablation above suggests a VLM would need &gt;75% action accuracy
-              to reliably benefit the agent on this environment.</em>
+              <em>Note: We did not evaluate real VLM integration on Gym-Sokoban due to compute
+              constraints. As shown by our noisy oracle results, an open-weight VLM would require an
+              action prediction accuracy above $50\%$ to provide meaningful benefit to an agent in this environment.</em>
+            </p>
+
+            <h4 class="title is-5 mt-5">Takeaways from the Sokoban Domain</h4>
+
+            <p>
+              Sokoban serves as a boundary case for the framework. Because the combinatorial planning task is
+              highly complex for a standard PPO policy, adding an oracle action warps the training optimization
+              path toward heavy delegation rather than progressive internalization. To foster genuine autonomy in
+              irreversible environments, future configurations will likely require training for significantly longer
+              or replacing the minigrid equivalent CNN policy with a larger, more expressive network architecture.
             </p>
 
           </div>
@@ -1350,14 +1467,18 @@
 
             <p>
               VALET agents learned to query the oracle selectively and purposefully, concentrating
-              calls at genuine decision points rather than blindly delegating at every step. Across
-              all experiments, the agent self-regulates its oracle usage as a function of query
-              cost and oracle quality: it queries heavily when guidance is cheap and reliable,
-              reduces usage as the policy matures, and stops querying entirely when the oracle
-              is not worth its cost. The zero-shot transfer results further show that this
-              querying behavior is not task-specific but generalizes to structurally different
-              environments never seen during training. VALET therefore demonstrates that RL
-              agents can learn not just <em>how</em> to act, but <em>when</em> to ask for help.
+              calls at genuine decision points rather than blindly delegating at every step. On
+              MiniGrid-DoorKey, the agent self-regulates oracle usage as the policy matures,
+              progressively replacing external guidance with learned autonomy. On Gym-Sokoban,
+              the picture is more nuanced: VALET still confers a large benefit, as an unguided PPO
+              baseline flatlines at 10% success while VALET agents succeed consistently, but the
+              agent learns to delegate sustainably rather than internalize the task, maintaining
+              high oracle usage throughout training. Across both settings, the agent stops querying
+              when the oracle is not worth its cost, and the querying behavior transfers zero-shot
+              to structurally different environments never seen during training. VALET therefore
+              demonstrates that RL agents can learn not just <em>how</em> to act, but <em>when</em>
+              to ask for help, and that the degree to which they ultimately internalize that
+              guidance depends on the complexity of the task.
             </p>
 
             <p>
@@ -1374,7 +1495,16 @@
               identify and reach the correct object among several simultaneously visible ones,
               directly instantiates this ideal regime, and training on it would bring VALET
               closest to this vision. We believe this is the most promising direction for future
-              work, and that VALET provides a principled framework to pursue it.
+              work, and that VALET provides a principled framework to pursue it. A second
+              insight follows from the noisy oracle experiments: because the agent stops querying
+              an unreliable oracle entirely on its own, the oracle usage rate of a deployed VALET
+              agent is a label-free signal of VLM utility on a given task. This makes VALET not
+              only a training framework but a potential deployment-time benchmark for VLMs in
+              decision-making settings. The Sokoban results additionally suggest that the
+              representational capacity of the policy backbone is a precondition for the full
+              VALET behavior: a more expressive architecture may be required for the agent to
+              internalize complex spatial planning and progressively reduce oracle dependence on
+              harder domains.
             </p>
 
             <h3 class="title is-4" id="ccl-limitations">Limitations</h3>
@@ -1385,6 +1515,15 @@
               may yield significantly higher action accuracy, potentially crossing the threshold
               above which VLM guidance genuinely benefits the agent. Whether such models would
               make VALET fully end-to-end remains an open question.
+            </p>
+
+            <p><strong>Policy architecture bottleneck.</strong>
+              All experiments use a CNN policy, which may be too limited to internalize the
+              complex spatial planning that Sokoban requires. The linear cost schedule results
+              are particularly telling: as the oracle becomes expensive, performance collapses
+              rather than the agent adapting. A more expressive backbone (such as a transformer)
+              may be necessary for VALET's self-regulatory mechanism to produce genuine
+              progressive autonomy on harder domains.
             </p>
 
             <p><strong>Full observability assumption.</strong>
@@ -1405,10 +1544,16 @@
             </p>
 
             <p><strong>VALET as a VLM benchmark.</strong>
-              As discussed in the noisy oracle section, the oracle usage rate of a trained VALET
-              agent could serve as an automatic proxy for VLM quality, without any labeled data.
-              This could provide a lightweight, deployment-time method for evaluating and
-              comparing VLMs in decision-making settings.
+              One of the most striking results in this work is that a trained VALET agent
+              naturally stops querying an oracle that is not reliable enough to be worth its
+              cost. This behavior emerges without any explicit signal about oracle quality:
+              the agent discovers it purely through reward. As a consequence, the oracle usage
+              rate of a deployed VALET agent is an automatic, label-free proxy for VLM utility
+              on a given task. Rather than requiring a curated evaluation set and manual
+              annotation, one could deploy VALET and simply observe whether the agent keeps
+              calling the VLM. This opens a compelling direction: using VALET as a
+              deployment-time benchmark for comparing VLMs in decision-making settings,
+              without any labeled data.
             </p>
 
             <p><strong>Training on Fetch toward a universal navigate-to-goal agent.</strong>
@@ -1514,10 +1659,10 @@
               cost increases.
             </p>
 
-            <p><strong>Hershey — Sokoban and MiniGrid 8×8.</strong>
+            <p><strong>Harsh Talathi — Sokoban and MiniGrid 8×8.</strong>
               Hershey extended the VALET framework to the Sokoban environment, implementing the
               training pipeline and running the cost sweep and noisy oracle ablations on this
-              significantly harder domain with irreversible actions (Figures 10–11). He also
+              significantly harder domain with irreversible actions (Figures 10–12). He also
               contributed to the MiniGrid-DoorKey-8×8 experiments, validating the framework on
               the smaller grid setting.
             </p>

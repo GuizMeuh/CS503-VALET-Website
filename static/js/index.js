@@ -1,24 +1,24 @@
 window.HELP_IMPROVE_VIDEOJS = false;
 
-// ── Sokoban interactive GIF picker ────────────────────────────────────────────
-var SOKOBAN_CAPTIONS = {
-  baseline:      'Baseline PPO agent — no oracle access.',
-  oracle_free:   'Free oracle (cost=0, acc=100%): agent queries nearly every step and solves consistently.',
-  oracle_cost01: 'Cost=0.1: agent queries heavily but begins to self-regulate.',
-  oracle_cost05: 'Cost=0.5: agent queries selectively — only at critical decision points.',
-  oracle_cost08: 'Cost=0.8: agent queries rarely, relying mostly on its own learned policy.',
-  oracle_linear: 'Linear cost schedule (0→2 over 2M steps): agent bootstraps on cheap guidance early, then internalizes the policy as querying becomes expensive.',
-};
-
-function setSokobanGif(key, btn) {
-  document.querySelectorAll('#sokoban-buttons .button').forEach(function(b) {
+// ── Sokoban transfer GIF picker ───────────────────────────────────────────────
+function setSokobanTransferGif(key, btn) {
+  document.querySelectorAll('#sokoban-transfer-buttons .button').forEach(function(b) {
     b.classList.remove('is-dark');
   });
   btn.classList.add('is-dark');
-  // Cache-bust so the GIF restarts from frame 1
-  document.getElementById('sokoban-demo').src =
+  document.getElementById('sokoban-transfer-demo').src =
+    './static/gifs/sokoban/transfer_fixedtarget_' + key + '.gif?t=' + Date.now();
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Sokoban interactive GIF picker ────────────────────────────────────────────
+function setSokobanLinearGif(key, btn) {
+  document.querySelectorAll('#sokoban-linear-buttons .button').forEach(function(b) {
+    b.classList.remove('is-dark');
+  });
+  btn.classList.add('is-dark');
+  document.getElementById('sokoban-linear-demo').src =
     './static/gifs/sokoban/' + key + '.gif?t=' + Date.now();
-  document.getElementById('sokoban-caption').textContent = SOKOBAN_CAPTIONS[key];
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
