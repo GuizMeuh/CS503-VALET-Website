@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="description"
         content="VALET teaches a reinforcement learning agent to selectively consult a VLM expert, querying only at genuine decision points to learn faster and at lower supervision cost.">
-  <meta name="keywords" content="project website, template, research">
+  <meta name="keywords" content="reinforcement learning, vision-language model, VLM, oracle, VALET, PPO, MiniGrid, Sokoban, selective querying, sample efficiency">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VALET: VLM-Assisted LEarning with Targeted queries</title>
 <!------------------------------------------------------------------------->
@@ -742,7 +742,7 @@
               We also investigate whether providing a sliding window of past frames improves
               predictions, giving the VLM past images and past actions as additional context.
               Full results and model comparisons are presented in <a href="#exp-vlm-bench">Section IV-B</a>.
-
+            </p>
 
             <h3 class="title is-4" id="method-transfer">C. Zero-Shot Transfer</h3>
 
@@ -924,7 +924,7 @@
               <strong>Figure 4</strong>, we report the macro-F1 vs. latency trade-off across
               models, inference modes, and prompt variants — top-left being optimal.
               WeThink-Qwen2.5-VL 7B in <em>thinking</em> mode achieves the highest macro-F1
-              (~51%), though no model-prompt combination exceeds 52%. Prompt phrasing alone
+              (~37%), though no model-prompt combination exceeds 40%. Prompt phrasing alone
               shifts performance by more than 20 absolute points within a single model, and
               the <em>optimal</em> prompt variant consistently underperforms across all models.
               InternVL-8B-MPO collapses below 20% in several configurations. Based on these
@@ -1422,7 +1422,7 @@
       <div class="columns is-centered">
         <div class="column is-full-width">
 
-          <h2 class="title is-3">🧭 Interactive Demo — Be the Oracle</h2>
+          <h2 class="title is-3">Interactive Demo: Be the Oracle</h2>
           <div class="content has-text-justified">
             <p>
               Try VALET yourself. The trained agent navigates
@@ -1649,8 +1649,7 @@
                 <div class="column is-8">
                   <div class="content">
                     <h6 class="title is-6">Individual Contributions</h6>
-                    <p>
-                      <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
+                    <p><strong>Tomas Jouven — MiniGrid training and interpretability.</strong>
               Tomas led the training experiments on MiniGrid-DoorKey-8×8 and 16×16, running the
               full sweep of oracle costs and seeds that produced the main BFS oracle results
               (Figures 1–3). He was also responsible for the interpretability analysis of the
